@@ -7,6 +7,8 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
       "backgroundColor": "#001B3A"
     },
     "assetBundlePatterns": [
@@ -21,10 +23,8 @@
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#001B3A"
       },
-      "package": "com.pspace.toolbox"
-    },
-    "web": {
-      "favicon": "./assets/icon.png"
+      "package": "com.pspace.toolbox",
+      "versionCode": 1
     },
     "plugins": [
       "expo-font"
