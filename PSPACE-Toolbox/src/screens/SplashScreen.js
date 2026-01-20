@@ -7,6 +7,7 @@ export default function SplashScreen({ onFinish }) {
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
 
   useEffect(() => {
+    // Animate logo
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -21,6 +22,7 @@ export default function SplashScreen({ onFinish }) {
       }),
     ]).start();
 
+    // Navigate to main menu after 3 seconds
     const timer = setTimeout(() => {
       onFinish();
     }, 3000);
@@ -53,7 +55,7 @@ export default function SplashScreen({ onFinish }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primary, // Navy blue
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -63,13 +65,14 @@ const styles = StyleSheet.create({
   logo: {
     width: 200,
     height: 200,
-    marginBottom: -10,
+    marginBottom: -30,
   },
   toolboxText: {
     fontSize: 32,
     fontWeight: 'bold',
+    fontFamily: 'Poppins_700Bold',
     color: colors.white,
     letterSpacing: 2,
-    marginTop: 0,
+    marginTop: -35,
   },
 });

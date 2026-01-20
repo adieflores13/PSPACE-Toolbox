@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
+import { useFonts, Poppins_400Regular, Poppins_600SemiBold, Poppins_700Bold } from '@expo-google-fonts/poppins';
+import * as SplashScreenExpo from 'expo-splash-screen';
 
 import SplashScreen from './src/screens/SplashScreen';
 import MainMenuScreen from './src/screens/MainMenuScreen';
@@ -16,8 +18,26 @@ import colors from './src/constants/colors';
 
 const Stack = createNativeStackNavigator();
 
+SplashScreenExpo.preventAutoHideAsync();
+
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
+  
+  let [fontsLoaded] = useFonts({
+    Poppins_400Regular,
+    Poppins_600SemiBold,
+    Poppins_700Bold,
+  });
+
+  React.useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreenExpo.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
 
   if (showSplash) {
     return <SplashScreen onFinish={() => setShowSplash(false)} />;
@@ -30,12 +50,14 @@ export default function App() {
         initialRouteName="MainMenu"
         screenOptions={{
           headerStyle: {
-            backgroundColor: colors.primary, // Navy blue header
+            backgroundColor: colors.primary,
           },
           headerTintColor: colors.white,
           headerTitleStyle: {
             fontWeight: 'bold',
           },
+          headerBackTitleVisible: false,
+          headerBackTitle: '',
         }}
       >
         <Stack.Screen 
