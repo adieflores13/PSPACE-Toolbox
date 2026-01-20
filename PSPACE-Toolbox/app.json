@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "PSPACE-Toolbox",
+    "slug": "pspace-toolbox",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#001B3A"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.pspace.toolbox"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#001B3A"
+      },
+      "package": "com.pspace.toolbox"
+    },
+    "web": {
+      "favicon": "./assets/icon.png"
+    }
+  }
+}
