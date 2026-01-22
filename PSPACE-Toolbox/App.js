@@ -1,3 +1,4 @@
+// App.js
 import React, { useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -50,7 +51,7 @@ export default function App() {
         initialRouteName="MainMenu"
         screenOptions={{
           headerStyle: {
-            backgroundColor: colors.primary,
+            backgroundColor: colors.primary, // Navy blue header
           },
           headerTintColor: colors.white,
           headerTitleStyle: {
@@ -78,7 +79,7 @@ export default function App() {
         <Stack.Screen 
           name="ClimbDescent" 
           component={ClimbDescentScreen}
-          options={{ title: 'Climb + Descent' }}
+          options={{ title: 'Gradient and Rate' }}
         />
         <Stack.Screen 
           name="WindCorrectedHeadings" 

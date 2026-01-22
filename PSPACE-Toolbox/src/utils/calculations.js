@@ -1,3 +1,5 @@
+// src/utils/calculations.js
+
 // Wind Component Calculations
 export const calculateWindComponent = (runway, windDirection, windSpeed) => {
   const runwayHeading = parseInt(runway) * 10;
@@ -24,21 +26,21 @@ export const convertGradient = (value, fromUnit) => {
   if (fromUnit === 'degrees') {
     degrees = parseFloat(value);
     percent = Math.tan(degrees * Math.PI / 180) * 100;
-    ftPerNm = percent * 60.76; // 1 nm = 6076 ft
+    ftPerNm = percent * 60.76; // 1 nm = 6076 ft (precise)
   } else if (fromUnit === 'percent') {
     percent = parseFloat(value);
     degrees = Math.atan(percent / 100) * 180 / Math.PI;
     ftPerNm = percent * 60.76;
   } else if (fromUnit === 'ftPerNm') {
     ftPerNm = parseFloat(value);
-    percent = ftPerNm / 60.76;
-    degrees = Math.atan(percent / 100) * 180 / Math.PI;
+    percent = ftPerNm / 60.76; // Convert ft/nm to %
+    degrees = Math.atan(percent / 100) * 180 / Math.PI; // Convert % to degrees
   }
   
   return {
     degrees: degrees.toFixed(2),
     percent: percent.toFixed(2),
-    ftPerNm: ftPerNm.toFixed(0),
+    ftPerNm: Math.round(ftPerNm).toString(), // Convert to string for text input
   };
 };
 

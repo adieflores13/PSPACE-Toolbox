@@ -35,19 +35,22 @@ export default function ClimbDescentScreen({ navigation }) {
   const handleConvert = () => {
     Keyboard.dismiss();
     let result;
-    if (gradientDeg) {
+    
+    // Determine which field has a value and convert from there
+    if (gradientDeg && gradientDeg !== converted?.degrees) {
       result = convertGradient(gradientDeg, 'degrees');
       setGradientPct(result.percent);
       setGradientFtNm(result.ftPerNm);
-    } else if (gradientPct) {
+    } else if (gradientPct && gradientPct !== converted?.percent) {
       result = convertGradient(gradientPct, 'percent');
       setGradientDeg(result.degrees);
       setGradientFtNm(result.ftPerNm);
-    } else if (gradientFtNm) {
+    } else if (gradientFtNm && gradientFtNm !== converted?.ftPerNm) {
       result = convertGradient(gradientFtNm, 'ftPerNm');
       setGradientDeg(result.degrees);
       setGradientPct(result.percent);
     }
+    
     setConverted(result);
   };
 

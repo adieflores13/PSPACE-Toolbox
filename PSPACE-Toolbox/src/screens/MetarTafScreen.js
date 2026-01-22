@@ -8,7 +8,7 @@ import { getMetarTaf } from '../utils/metarApi';
 export default function MetarTafScreen({ navigation }) {
   const [airport, setAirport] = useState('');
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
+  const [results, setResults] = useState([]);
   const [error, setError] = useState('');
 
   React.useLayoutEffect(() => {
@@ -23,7 +23,7 @@ export default function MetarTafScreen({ navigation }) {
 
   const handleReset = () => {
     setAirport('');
-    setResult(null);
+    setResults([]);
     setError('');
   };
 
@@ -31,22 +31,39 @@ export default function MetarTafScreen({ navigation }) {
     Keyboard.dismiss();
     
     if (!airport.trim()) {
-      setError('Please enter an airport code');
+      setError('Please enter at least one airport code');
       return;
     }
 
     setLoading(true);
     setError('');
-    setResult(null);
+    setResults([]);
 
-    const data = await getMetarTaf(airport);
+    const airports = airport.toUpperCase().trim().split(/\s+/);
+    const fetchedResults = [];
+    const failedAirports = [];
+
+    for (const code of airports) {
+      const data = await getMetarTaf(code);
+      if (data.success) {
+        fetchedResults.push(data);
+      } else {
+        failedAirports.push(code);
+      }
+    }
     
     setLoading(false);
     
-    if (data.success) {
-      setResult(data);
-    } else {
-      setError(data.error);
+    if (fetchedResults.length > 0) {
+      setResults(fetchedResults);
+    }
+    
+    if (failedAirports.length > 0) {
+      if (failedAirports.length === airports.length) {
+        setError(`Unable to find weather data for: ${failedAirports.join(', ')}. Please check the airport code(s) and try again.`);
+      } else {
+        setError(`Weather data retrieved for some airports. Unable to find data for: ${failedAirports.join(', ')}`);
+      }
     }
   };
 
@@ -63,11 +80,13 @@ export default function MetarTafScreen({ navigation }) {
       >
         <View style={styles.content}>
         <InputField
-          label="Airport Code"
+          label="Airport Code(s)"
           value={airport}
           onChangeText={setAirport}
           placeholder=""
         />
+        
+        <Text style={styles.hint}>Enter one or more ICAO codes (e.g., EGGP or EGGP EGCC)</Text>
         
         <Button 
           title="Get METAR + TAF" 
@@ -87,8 +106,8 @@ export default function MetarTafScreen({ navigation }) {
           </View>
         )}
 
-        {result && (
-          <View style={styles.resultContainer}>
+        {results.length > 0 && results.map((result, index) => (
+          <View key={index} style={styles.resultContainer}>
             <Text style={styles.airportCode}>{result.airport}:</Text>
             
             <View style={styles.dataSection}>
@@ -101,7 +120,7 @@ export default function MetarTafScreen({ navigation }) {
               <Text style={styles.dataText}>{result.taf}</Text>
             </View>
           </View>
-        )}
+        ))}
       </View>
     </ScrollView>
     </KeyboardAvoidingView>
@@ -119,6 +138,13 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
   },
+  hint: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: -5,
+    marginBottom: 10,
+    fontStyle: 'italic',
+  },
   loadingContainer: {
     marginTop: 30,
     alignItems: 'center',
@@ -130,14 +156,15 @@ const styles = StyleSheet.create({
   errorContainer: {
     marginTop: 20,
     padding: 15,
-    backgroundColor: '#FEE2E2',
+    backgroundColor: '#FEF3C7',
     borderRadius: 8,
     borderLeftWidth: 4,
-    borderLeftColor: colors.error,
+    borderLeftColor: colors.warning,
   },
   errorText: {
-    color: colors.error,
+    color: '#92400E',
     fontSize: 14,
+    lineHeight: 20,
   },
   resultContainer: {
     marginTop: 20,
