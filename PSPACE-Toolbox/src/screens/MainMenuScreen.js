@@ -1,3 +1,4 @@
+// src/screens/MainMenuScreen.js
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import Button from '../components/Button';
@@ -7,7 +8,7 @@ export default function MainMenuScreen({ navigation }) {
   const menuItems = [
     { title: 'METAR/TAF', screen: 'MetarTaf' },
     { title: 'Wind Component', screen: 'WindComponent' },
-    { title: 'Gradients/%/ft/nm\nRate of Climb/Descent', screen: 'ClimbDescent' },
+    { title: 'Gradient and Rate', screen: 'ClimbDescent' },
     { title: 'Wind Corrected Headings', screen: 'WindCorrectedHeadings' },
     { title: 'Air Speeds', screen: 'AirSpeeds' },
     { title: 'Altitudes + Heights', screen: 'AltitudesHeights' },
@@ -17,7 +18,6 @@ export default function MainMenuScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.header}>MAIN</Text>
         {menuItems.map((item, index) => (
           <Button
             key={index}
@@ -38,13 +38,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 20,
-    textAlign: 'center',
+    paddingTop: 10,
   },
   menuButton: {
     marginVertical: 6,

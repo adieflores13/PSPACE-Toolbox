@@ -12,6 +12,7 @@ export default function ClimbDescentScreen({ navigation }) {
   const [groundSpeed, setGroundSpeed] = useState('');
   const [converted, setConverted] = useState(null);
   const [rate, setRate] = useState(null);
+  const [lastEditedField, setLastEditedField] = useState(null);
 
   React.useLayoutEffect(() => {
     navigation.setOptions({
@@ -30,28 +31,29 @@ export default function ClimbDescentScreen({ navigation }) {
     setGroundSpeed('');
     setConverted(null);
     setRate(null);
+    setLastEditedField(null);
   };
 
   const handleConvert = () => {
     Keyboard.dismiss();
     let result;
     
-    // Determine which field has a value and convert from there
-    if (gradientDeg && gradientDeg !== converted?.degrees) {
+    if (lastEditedField === 'deg' && gradientDeg) {
       result = convertGradient(gradientDeg, 'degrees');
       setGradientPct(result.percent);
       setGradientFtNm(result.ftPerNm);
-    } else if (gradientPct && gradientPct !== converted?.percent) {
+      setConverted(result);
+    } else if (lastEditedField === 'pct' && gradientPct) {
       result = convertGradient(gradientPct, 'percent');
       setGradientDeg(result.degrees);
       setGradientFtNm(result.ftPerNm);
-    } else if (gradientFtNm && gradientFtNm !== converted?.ftPerNm) {
+      setConverted(result);
+    } else if (lastEditedField === 'ftNm' && gradientFtNm) {
       result = convertGradient(gradientFtNm, 'ftPerNm');
       setGradientDeg(result.degrees);
       setGradientPct(result.percent);
+      setConverted(result);
     }
-    
-    setConverted(result);
   };
 
   const handleCalculateRate = () => {
@@ -80,7 +82,10 @@ export default function ClimbDescentScreen({ navigation }) {
         <InputField
           label="Gradient (°)"
           value={gradientDeg}
-          onChangeText={setGradientDeg}
+          onChangeText={(text) => {
+            setGradientDeg(text);
+            setLastEditedField('deg');
+          }}
           placeholder=""
           keyboardType="decimal-pad"
         />
@@ -88,7 +93,10 @@ export default function ClimbDescentScreen({ navigation }) {
         <InputField
           label="Gradient (%)"
           value={gradientPct}
-          onChangeText={setGradientPct}
+          onChangeText={(text) => {
+            setGradientPct(text);
+            setLastEditedField('pct');
+          }}
           placeholder=""
           keyboardType="decimal-pad"
         />
@@ -96,7 +104,10 @@ export default function ClimbDescentScreen({ navigation }) {
         <InputField
           label="Gradient (ft/nm)"
           value={gradientFtNm}
-          onChangeText={setGradientFtNm}
+          onChangeText={(text) => {
+            setGradientFtNm(text);
+            setLastEditedField('ftNm');
+          }}
           placeholder=""
           keyboardType="decimal-pad"
         />

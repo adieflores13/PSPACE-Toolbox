@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, Keyboard, Modal } from 'react-native';
 import InputField from '../components/InputField';
 import Button from '../components/Button';
 import colors from '../constants/colors';
@@ -7,7 +7,10 @@ import colors from '../constants/colors';
 export default function UnitConversionsScreen({ navigation }) {
   const [value, setValue] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('distance');
+  const [selectedFromUnit, setSelectedFromUnit] = useState('nm'); // Initialize with default
   const [result, setResult] = useState(null);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showUnitModal, setShowUnitModal] = useState(false);
 
   React.useLayoutEffect(() => {
     navigation.setOptions({
@@ -27,59 +30,97 @@ export default function UnitConversionsScreen({ navigation }) {
   const categories = {
     distance: {
       label: 'Distance',
-      conversions: [
-        { from: 'Nautical Miles', to: 'Kilometers', factor: 1.852 },
-        { from: 'Nautical Miles', to: 'Statute Miles', factor: 1.15078 },
-        { from: 'Feet', to: 'Meters', factor: 0.3048 },
-      ]
+      units: {
+        'nm': { name: 'Nautical Miles', conversions: [
+          { to: 'km', factor: 1.852, name: 'Kilometers' },
+          { to: 'mi', factor: 1.15078, name: 'Statute Miles' },
+        ]},
+        'km': { name: 'Kilometers', conversions: [
+          { to: 'nm', factor: 0.539957, name: 'Nautical Miles' },
+          { to: 'mi', factor: 0.621371, name: 'Statute Miles' },
+        ]},
+        'ft': { name: 'Feet', conversions: [
+          { to: 'm', factor: 0.3048, name: 'Meters' },
+        ]},
+      }
     },
     speed: {
       label: 'Speed',
-      conversions: [
-        { from: 'Knots', to: 'km/h', factor: 1.852 },
-        { from: 'Knots', to: 'mph', factor: 1.15078 },
-        { from: 'Knots', to: 'm/s', factor: 0.514444 },
-      ]
+      units: {
+        'kts': { name: 'Knots', conversions: [
+          { to: 'km/h', factor: 1.852, name: 'km/h' },
+          { to: 'mph', factor: 1.15078, name: 'mph' },
+          { to: 'm/s', factor: 0.514444, name: 'm/s' },
+        ]},
+        'km/h': { name: 'km/h', conversions: [
+          { to: 'kts', factor: 0.539957, name: 'Knots' },
+          { to: 'mph', factor: 0.621371, name: 'mph' },
+        ]},
+      }
     },
     pressure: {
       label: 'Pressure',
-      conversions: [
-        { from: 'hPa', to: 'inHg', factor: 0.02953 },
-        { from: 'inHg', to: 'hPa', factor: 33.8639 },
-      ]
+      units: {
+        'hPa': { name: 'hPa', conversions: [
+          { to: 'inHg', factor: 0.02953, name: 'inHg' },
+        ]},
+        'inHg': { name: 'inHg', conversions: [
+          { to: 'hPa', factor: 33.8639, name: 'hPa' },
+        ]},
+      }
     },
     temperature: {
       label: 'Temperature',
-      conversions: [
-        { from: '°C', to: '°F', formula: (c) => (c * 9/5) + 32 },
-        { from: '°F', to: '°C', formula: (f) => (f - 32) * 5/9 },
-      ]
+      units: {
+        '°C': { name: '°C', conversions: [
+          { to: '°F', formula: (c) => (c * 9/5) + 32, name: '°F' },
+        ]},
+        '°F': { name: '°F', conversions: [
+          { to: '°C', formula: (f) => (f - 32) * 5/9, name: '°C' },
+        ]},
+      }
     },
     weight: {
       label: 'Weight',
-      conversions: [
-        { from: 'Kilograms', to: 'Pounds', factor: 2.20462 },
-        { from: 'Pounds', to: 'Kilograms', factor: 0.453592 },
-      ]
+      units: {
+        'kg': { name: 'Kilograms', conversions: [
+          { to: 'lbs', factor: 2.20462, name: 'Pounds' },
+        ]},
+        'lbs': { name: 'Pounds', conversions: [
+          { to: 'kg', factor: 0.453592, name: 'Kilograms' },
+        ]},
+      }
     },
     volume: {
       label: 'Volume (Fuel)',
-      conversions: [
-        { from: 'Liters', to: 'US Gallons', factor: 0.264172 },
-        { from: 'US Gallons', to: 'Liters', factor: 3.78541 },
-      ]
+      units: {
+        'L': { name: 'Liters', conversions: [
+          { to: 'gal', factor: 0.264172, name: 'US Gallons' },
+        ]},
+        'gal': { name: 'US Gallons', conversions: [
+          { to: 'L', factor: 3.78541, name: 'Liters' },
+        ]},
+      }
     },
   };
 
+  // Set default "from" unit when category changes
+  React.useEffect(() => {
+    const firstUnit = Object.keys(categories[selectedCategory].units)[0];
+    setSelectedFromUnit(firstUnit);
+    setResult(null);
+    setValue('');
+  }, [selectedCategory]);
+
   const handleConvert = () => {
     Keyboard.dismiss();
-    if (!value) return;
+    if (!value || !selectedFromUnit) return;
 
     const val = parseFloat(value);
-    const category = categories[selectedCategory];
+    const fromUnitData = categories[selectedCategory].units[selectedFromUnit];
     const results = [];
 
-    category.conversions.forEach(conv => {
+    fromUnitData.conversions.forEach(conv => {
       let converted;
       if (conv.formula) {
         converted = conv.formula(val);
@@ -87,13 +128,15 @@ export default function UnitConversionsScreen({ navigation }) {
         converted = val * conv.factor;
       }
       results.push({
-        from: `${val} ${conv.from}`,
+        from: `${val} ${selectedFromUnit}`,
         to: `${converted.toFixed(2)} ${conv.to}`,
       });
     });
 
     setResult(results);
   };
+
+  const availableUnits = categories[selectedCategory].units;
 
   return (
     <KeyboardAvoidingView 
@@ -107,30 +150,14 @@ export default function UnitConversionsScreen({ navigation }) {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.content}>
-        <Text style={styles.description}>Select conversion category:</Text>
-
-        <View style={styles.categoryContainer}>
-          {Object.keys(categories).map((key) => (
-            <TouchableOpacity
-              key={key}
-              style={[
-                styles.categoryButton,
-                selectedCategory === key && styles.categoryButtonActive
-              ]}
-              onPress={() => {
-                setSelectedCategory(key);
-                setResult(null);
-              }}
-            >
-              <Text style={[
-                styles.categoryText,
-                selectedCategory === key && styles.categoryTextActive
-              ]}>
-                {categories[key].label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <Text style={styles.label}>Conversion Category:</Text>
+        <TouchableOpacity 
+          style={styles.dropdown}
+          onPress={() => setShowCategoryModal(true)}
+        >
+          <Text style={styles.dropdownText}>{categories[selectedCategory].label}</Text>
+          <Text style={styles.dropdownArrow}>▼</Text>
+        </TouchableOpacity>
 
         <InputField
           label="Value to convert"
@@ -139,6 +166,21 @@ export default function UnitConversionsScreen({ navigation }) {
           placeholder=""
           keyboardType="decimal-pad"
         />
+
+        {Object.keys(availableUnits).length > 1 && (
+          <>
+            <Text style={styles.label}>Convert from:</Text>
+            <TouchableOpacity 
+              style={styles.dropdown}
+              onPress={() => setShowUnitModal(true)}
+            >
+              <Text style={styles.dropdownText}>
+                {availableUnits[selectedFromUnit]?.name || 'Select unit'}
+              </Text>
+              <Text style={styles.dropdownArrow}>▼</Text>
+            </TouchableOpacity>
+          </>
+        )}
 
         <Button 
           title="CONVERT" 
@@ -158,6 +200,69 @@ export default function UnitConversionsScreen({ navigation }) {
         )}
       </View>
     </ScrollView>
+
+      {/* Category Modal */}
+      <Modal
+        visible={showCategoryModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowCategoryModal(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowCategoryModal(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Category</Text>
+            {Object.entries(categories).map(([key, cat]) => (
+              <TouchableOpacity
+                key={key}
+                style={styles.modalOption}
+                onPress={() => {
+                  setSelectedCategory(key);
+                  setShowCategoryModal(false);
+                }}
+              >
+                <Text style={styles.modalOptionText}>{cat.label}</Text>
+                {selectedCategory === key && <Text style={styles.checkmark}>✓</Text>}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Unit Modal */}
+      <Modal
+        visible={showUnitModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowUnitModal(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowUnitModal(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Convert From</Text>
+            {Object.entries(availableUnits).map(([key, unit]) => (
+              <TouchableOpacity
+                key={key}
+                style={styles.modalOption}
+                onPress={() => {
+                  setSelectedFromUnit(key);
+                  setShowUnitModal(false);
+                  setResult(null);
+                }}
+              >
+                <Text style={styles.modalOptionText}>{unit.name}</Text>
+                {selectedFromUnit === key && <Text style={styles.checkmark}>✓</Text>}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -173,36 +278,70 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
   },
-  description: {
+  label: {
     fontSize: 14,
-    color: colors.textSecondary,
-    marginBottom: 15,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 8,
+    marginTop: 5,
   },
-  categoryContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 20,
-  },
-  categoryButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
+  dropdown: {
     backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: colors.border,
-    margin: 4,
+    borderRadius: 8,
+    paddingVertical: 15,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  categoryButtonActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  categoryText: {
-    fontSize: 14,
+  dropdownText: {
+    fontSize: 16,
     color: colors.text,
   },
-  categoryTextActive: {
-    color: colors.white,
-    fontWeight: '600',
+  dropdownArrow: {
+    fontSize: 12,
+    color: colors.textSecondary,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: 20,
+    width: '80%',
+    maxHeight: '70%',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.primary,
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  modalOption: {
+    paddingVertical: 15,
+    paddingHorizontal: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  modalOptionText: {
+    fontSize: 16,
+    color: colors.text,
+  },
+  checkmark: {
+    fontSize: 18,
+    color: colors.secondary,
+    fontWeight: 'bold',
   },
   resultContainer: {
     marginTop: 20,

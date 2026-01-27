@@ -121,6 +121,7 @@ export default function WindComponentScreen({ navigation }) {
           value={wind}
           onChangeText={setWind}
           placeholder=""
+          keyboardType="numbers-and-punctuation"
         />
         
         <Button 

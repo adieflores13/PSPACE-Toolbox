@@ -39,11 +39,16 @@ export default function MetarTafScreen({ navigation }) {
     setError('');
     setResults([]);
 
+    // Split by spaces to handle multiple airports
     const airports = airport.toUpperCase().trim().split(/\s+/);
+    
+    // Remove duplicates
+    const uniqueAirports = [...new Set(airports)];
+    
     const fetchedResults = [];
     const failedAirports = [];
 
-    for (const code of airports) {
+    for (const code of uniqueAirports) {
       const data = await getMetarTaf(code);
       if (data.success) {
         fetchedResults.push(data);
@@ -59,9 +64,11 @@ export default function MetarTafScreen({ navigation }) {
     }
     
     if (failedAirports.length > 0) {
-      if (failedAirports.length === airports.length) {
+      if (failedAirports.length === uniqueAirports.length) {
+        // All airports failed
         setError(`Unable to find weather data for: ${failedAirports.join(', ')}. Please check the airport code(s) and try again.`);
       } else {
+        // Some succeeded, some failed
         setError(`Weather data retrieved for some airports. Unable to find data for: ${failedAirports.join(', ')}`);
       }
     }

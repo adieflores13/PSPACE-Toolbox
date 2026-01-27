@@ -13,7 +13,7 @@ export default function InputField({ label, value, onChangeText, placeholder, ke
         placeholder={placeholder}
         placeholderTextColor={colors.textSecondary}
         keyboardType={keyboardType}
-        autoCapitalize="characters"
+        autoCapitalize={keyboardType === 'default' ? 'characters' : 'none'}
       />
     </View>
   );
