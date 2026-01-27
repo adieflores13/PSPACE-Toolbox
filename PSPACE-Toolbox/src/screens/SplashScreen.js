@@ -7,7 +7,6 @@ export default function SplashScreen({ onFinish }) {
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
 
   useEffect(() => {
-    // Animate logo
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -22,7 +21,6 @@ export default function SplashScreen({ onFinish }) {
       }),
     ]).start();
 
-    // Navigate to main menu after 3 seconds
     const timer = setTimeout(() => {
       onFinish();
     }, 3000);

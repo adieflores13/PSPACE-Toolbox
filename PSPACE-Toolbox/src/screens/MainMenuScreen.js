@@ -1,4 +1,3 @@
-// src/screens/MainMenuScreen.js
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import Button from '../components/Button';

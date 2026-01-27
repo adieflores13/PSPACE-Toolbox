@@ -61,8 +61,14 @@ export default function WindComponentScreen({ navigation }) {
     // Determine crosswind side
     const runwayHeading = parseInt(formattedRunway) * 10;
     const windDir = parseInt(windDirection);
-    const angleDiff = (windDir - runwayHeading + 360) % 360;
-    const crosswindSide = angleDiff > 180 ? 'Left' : 'Right';
+    
+    // Calculate the relative angle (normalized to -180 to +180)
+    let relativeAngle = windDir - runwayHeading;
+    if (relativeAngle > 180) relativeAngle -= 360;
+    if (relativeAngle < -180) relativeAngle += 360;
+    
+    // Crosswind from right if wind is clockwise from runway heading
+    const crosswindSide = relativeAngle > 0 ? 'Right' : 'Left';
     
     setResult({
       ...calculated,
@@ -70,30 +76,20 @@ export default function WindComponentScreen({ navigation }) {
       windSpeed,
       runway: formattedRunway,
       crosswindSide,
+      relativeAngle: Math.abs(relativeAngle),
     });
   };
 
-  const getWindArrowRotation = () => {
+  const getWindOriginAngle = () => {
     if (!result) return 0;
-    
-    // Wind is FROM direction, so arrow points TOWARDS where wind comes from
-    const windDir = parseInt(result.windDirection);
-    return windDir;
+    // Wind is FROM this direction - arrow should point from wind origin
+    return parseInt(result.windDirection);
   };
 
-  const getRunwayRotation = () => {
+  const getRunwayHeading = () => {
     if (!result) return 0;
-    
-    // Runway heading (aircraft going towards)
-    const runwayHeading = parseInt(result.runway) * 10;
-    return runwayHeading;
+    return parseInt(result.runway) * 10;
   };
-
-  // Generate runway options 01-36
-  const runwayOptions = Array.from({ length: 36 }, (_, i) => {
-    const num = (i + 1).toString().padStart(2, '0');
-    return num;
-  });
 
   return (
     <KeyboardAvoidingView 
@@ -158,55 +154,77 @@ export default function WindComponentScreen({ navigation }) {
               
               <View style={styles.visualBox}>
                 <Text style={styles.infoText}>
-                  Runway {result.runway} • Wind {result.windDirection}°/{result.windSpeed}kts
+                  Runway {result.runway} ({getRunwayHeading()}°) • Wind FROM {result.windDirection}°/{result.windSpeed}kts
                 </Text>
                 
                 <View style={styles.diagram}>
-                  {/* Compass directions */}
+                  {/* North indicator */}
                   <View style={styles.compassContainer}>
-                    <Text style={styles.compassText}>N (360°)</Text>
+                    <Text style={styles.compassText}>N</Text>
+                    <Text style={styles.compassDegree}>360°</Text>
                   </View>
                   
-                  {/* Runway with aircraft direction */}
-                  <View style={styles.runwayContainer}>
+                  {/* Runway*/}
+                  <View style={styles.centerPoint}>
                     <View 
                       style={[
-                        styles.runwayRect,
-                        { transform: [{ rotate: `${getRunwayRotation()}deg` }] }
+                        styles.runwayLine,
+                        { transform: [{ rotate: `${getRunwayHeading()}deg` }] }
                       ]}
                     >
-                      <View style={styles.runwayInner}>
+                      <View style={styles.runwayRect}>
                         <Text style={styles.runwayLabel}>{result.runway}</Text>
-                        <Text style={styles.aircraftArrow}>✈</Text>
-                        <Text style={styles.directionLabel}>Aircraft →</Text>
+                      </View>
+                      <View style={styles.aircraftContainer}>
+                        <Text style={styles.aircraftSymbol}>✈</Text>
                       </View>
                     </View>
                   </View>
                   
-                  {/* Wind direction (FROM) */}
-                  <View style={styles.windContainer}>
+                  {/* Wind arrowww - showing FROM direction */}
+                  <View style={styles.centerPoint}>
                     <View 
                       style={[
-                        styles.windArrowContainer,
-                        { transform: [{ rotate: `${getWindArrowRotation() + 180}deg` }] }
+                        styles.windVector,
+                        { transform: [{ rotate: `${getWindOriginAngle()}deg` }] }
                       ]}
                     >
-                      <Text style={styles.windArrowLarge}>→</Text>
+                      {/* Wind comes FROM this direction (arrow points inward) */}
+                      <View style={styles.windArrowTip}>
+                        <Text style={styles.windArrowSymbol}>▼</Text>
+                      </View>
+                      <View style={styles.windLine} />
+                      <View style={styles.windLabel}>
+                        <Text style={styles.windLabelText}>WIND</Text>
+                        <Text style={styles.windDegreeText}>{result.windDirection}°</Text>
+                      </View>
                     </View>
-                    <Text style={styles.windFromLabel}>
-                      Wind FROM {result.windDirection}°
-                    </Text>
+                  </View>
+                  
+                  {/* Angle arc indicator */}
+                  <View style={styles.angleIndicator}>
+                    <Text style={styles.angleText}>{result.relativeAngle}°</Text>
                   </View>
                 </View>
                 
                 <View style={styles.legendBox}>
-                  <Text style={styles.legendTitle}>Components:</Text>
-                  <Text style={styles.legendItem}>
-                    • {result.isHeadwind ? 'Headwind' : 'Tailwind'}: {Math.abs(result.headwind)} kts (along runway)
-                  </Text>
-                  <Text style={styles.legendItem}>
-                    • Crosswind: {result.crosswind} kts (from {result.crosswindSide.toLowerCase()})
-                  </Text>
+                  <Text style={styles.legendTitle}>Wind Components:</Text>
+                  <View style={styles.componentRow}>
+                    <View style={styles.componentBox}>
+                      <Text style={styles.componentLabel}>Along Runway</Text>
+                      <Text style={styles.componentValue}>
+                        {result.isHeadwind ? 'Headwind' : 'Tailwind'}
+                      </Text>
+                      <Text style={styles.componentNumber}>{Math.abs(result.headwind)} kts</Text>
+                    </View>
+                    <View style={styles.componentBox}>
+                      <Text style={styles.componentLabel}>Across Runway</Text>
+                      <Text style={styles.componentValue}>
+                        Crosswind ({result.crosswindSide})
+                      </Text>
+                      <Text style={styles.componentNumber}>{result.crosswind} kts</Text>
+                    </View>
+                  </View>
                 </View>
               </View>
             </View>
@@ -280,104 +298,135 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   infoText: {
-    fontSize: 14,
+    fontSize: 13,
     color: colors.textSecondary,
     marginBottom: 20,
+    textAlign: 'center',
   },
   diagram: {
-    width: 300,
-    height: 300,
+    width: 320,
+    height: 320,
     position: 'relative',
-    backgroundColor: '#E8F4F8',
-    borderRadius: 150,
+    backgroundColor: '#F0F9FF',
+    borderRadius: 160,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
     borderWidth: 2,
-    borderColor: '#B8D4E0',
+    borderColor: '#BFDBFE',
   },
   compassContainer: {
     position: 'absolute',
-    top: 15,
+    top: 10,
+    alignItems: 'center',
   },
   compassText: {
-    fontSize: 13,
+    fontSize: 16,
     color: colors.primary,
     fontWeight: 'bold',
-    backgroundColor: colors.white,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
   },
-  runwayContainer: {
+  compassDegree: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  centerPoint: {
     position: 'absolute',
+    width: '100%',
+    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  runwayLine: {
+    position: 'absolute',
+    height: 200,
+    width: 60,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
   },
   runwayRect: {
-    width: 140,
-    height: 50,
-    backgroundColor: '#D1D5DB',
-    borderRadius: 6,
+    width: 60,
+    height: 140,
+    backgroundColor: '#6B7280',
+    borderRadius: 4,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#9CA3AF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  runwayInner: {
-    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#374151',
   },
   runwayLabel: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
-    color: colors.primary,
+    color: colors.white,
   },
-  aircraftArrow: {
-    fontSize: 24,
-    marginTop: 2,
-  },
-  directionLabel: {
-    fontSize: 11,
-    color: colors.primary,
-    marginTop: 2,
-    fontWeight: 'bold',
-  },
-  windContainer: {
-    position: 'absolute',
-    alignItems: 'center',
-    top: 60,
-  },
-  windArrowContainer: {
-    marginBottom: 10,
-    backgroundColor: 'rgba(255, 181, 71, 0.2)',
-    padding: 15,
-    borderRadius: 50,
-  },
-  windArrowLarge: {
-    fontSize: 50,
-    color: colors.secondary,
-    fontWeight: 'bold',
-  },
-  windFromLabel: {
-    fontSize: 13,
-    color: colors.secondary,
-    fontWeight: 'bold',
+  aircraftContainer: {
+    marginTop: 10,
     backgroundColor: colors.white,
+    borderRadius: 20,
+    padding: 8,
+    borderWidth: 2,
+    borderColor: colors.primary,
+  },
+  aircraftSymbol: {
+    fontSize: 20,
+  },
+  windVector: {
+    position: 'absolute',
+    height: 180,
+    width: 50,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+  windArrowTip: {
+    marginTop: 20,
+  },
+  windArrowSymbol: {
+    fontSize: 30,
+    color: colors.secondary,
+  },
+  windLine: {
+    width: 3,
+    height: 60,
+    backgroundColor: colors.secondary,
+    marginTop: 5,
+  },
+  windLabel: {
+    backgroundColor: colors.secondary,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginTop: 8,
+    alignItems: 'center',
+  },
+  windLabelText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: colors.white,
+  },
+  windDegreeText: {
+    fontSize: 10,
+    color: colors.white,
+    marginTop: 2,
+  },
+  angleIndicator: {
+    position: 'absolute',
+    bottom: 20,
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: colors.secondary,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  angleText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.primary,
   },
   legendBox: {
     width: '100%',
     backgroundColor: colors.white,
-    padding: 18,
+    padding: 16,
     borderRadius: 12,
     marginTop: 10,
     borderWidth: 1,
@@ -387,12 +436,33 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: 'bold',
     color: colors.primary,
-    marginBottom: 10,
+    marginBottom: 12,
+    textAlign: 'center',
   },
-  legendItem: {
-    fontSize: 14,
+  componentRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  componentBox: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 8,
+  },
+  componentLabel: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    marginBottom: 4,
+  },
+  componentValue: {
+    fontSize: 13,
+    fontWeight: '600',
     color: colors.text,
-    marginBottom: 6,
-    lineHeight: 20,
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  componentNumber: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.primary,
   },
 });

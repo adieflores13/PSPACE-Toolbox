@@ -7,7 +7,7 @@ import colors from '../constants/colors';
 export default function UnitConversionsScreen({ navigation }) {
   const [value, setValue] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('distance');
-  const [selectedFromUnit, setSelectedFromUnit] = useState('nm'); // Initialize with default
+  const [selectedFromUnit, setSelectedFromUnit] = useState('nm');
   const [result, setResult] = useState(null);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showUnitModal, setShowUnitModal] = useState(false);
