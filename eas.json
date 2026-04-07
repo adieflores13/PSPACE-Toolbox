@@ -15,6 +15,9 @@
     "preview": {
       "distribution": "internal",
       "node": "20.19.4",
+      "android": {
+        "buildType": "apk"
+      },
       "env": {
         "JAVA_HOME": "/usr/lib/jvm/java-17-openjdk-amd64"
       }

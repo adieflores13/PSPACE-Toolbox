@@ -1,12 +1,30 @@
 {
   "expo": {
+    "name": "PSPACE Toolbox",
+    "slug": "pspace-toolbox",
+    "icon": "./assets/logo.png",
+    "splash": {
+      "image": "./assets/logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFFFFF"
+    },
+    "android": {
+      "icon": "./assets/logo.png",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/logo.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "splash": {
+        "image": "./assets/logo.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#FFFFFF"
+      },
+      "package": "com.adieflores.pspacetoolbox"
+    },
     "extra": {
       "eas": {
         "projectId": "a0a71fa3-0fe8-4fdc-b7bf-059f19fd5659"
       }
-    },
-    "android": {
-      "package": "com.adieflores.pspacetoolbox"
     }
   }
 }

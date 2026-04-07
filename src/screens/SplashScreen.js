@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Image, StyleSheet, Animated } from 'react-native';
-import colors from '../constants/colors';
+import { View, Image, StyleSheet, Animated } from 'react-native';
 
 export default function SplashScreen({ onFinish }) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -30,7 +29,7 @@ export default function SplashScreen({ onFinish }) {
 
   return (
     <View style={styles.container}>
-      <Animated.View 
+      <Animated.View
         style={[
           styles.logoContainer,
           {
@@ -39,12 +38,11 @@ export default function SplashScreen({ onFinish }) {
           }
         ]}
       >
-        <Image 
-          source={require('../../assets/pspace-logo.png')} 
+        <Image
+          source={require('../../assets/logo.png')}
           style={styles.logo}
           resizeMode="contain"
         />
-        <Text style={styles.toolboxText}>Toolbox</Text>
       </Animated.View>
     </View>
   );
@@ -53,7 +51,7 @@ export default function SplashScreen({ onFinish }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.primary, // Navy blue
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -61,16 +59,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    width: 200,
-    height: 200,
-    marginBottom: -30,
-  },
-  toolboxText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    fontFamily: 'Poppins_700Bold',
-    color: colors.white,
-    letterSpacing: 2,
-    marginTop: -35,
+    width: 350,
+    height: 350,
   },
 });
