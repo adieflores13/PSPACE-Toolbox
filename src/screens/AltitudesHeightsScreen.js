@@ -34,7 +34,7 @@ export default function AltitudesHeightsScreen({ navigation }) {
   const handleCalculate = () => {
     Keyboard.dismiss();
     setError('');
-    
+
     if (!indicatedAlt) {
       setError('Please enter Indicated Altitude');
       return;
@@ -44,33 +44,19 @@ export default function AltitudesHeightsScreen({ navigation }) {
     const qnhValue = qnh && qnh.trim() !== '' ? parseFloat(qnh) : 1013;
     const elev = elevation ? parseFloat(elevation) : 0;
 
-    // Pressure altitude = Indicated altitude + (1013 - QNH) × 30
     const pressureAlt = altValue + ((1013 - qnhValue) * 30);
+    const isaTemp = 15 - (pressureAlt / 1000 * 1.98);
 
-    // ISA temperature at pressure altitude
-    const isaTemp = 15 - (pressureAlt / 1000 * 1.98); // ISA lapse rate: 1.98°C per 1000ft
-
-    // OAT (Outside Air Temperature) - use ISA if not provided
     let oatValue;
     if (oat && oat.trim() !== '') {
       oatValue = parseFloat(oat);
     } else {
-      // Default to ISA temperature at this pressure altitude
       oatValue = isaTemp;
     }
 
-    // ISA deviation
     const isaDeviation = oatValue - isaTemp;
-
-    // Density altitude calculation
-    // DA = PA + [120 × (OAT - ISA Temp)]
     const densityAlt = pressureAlt + (120 * isaDeviation);
-
-    // Height above ground
     const heightAGL = altValue - elev;
-
-    // True altitude (accounting for temperature deviation)
-    // Simplified: TA = PA + (PA × (OAT - ISA_temp) / (273 + ISA_temp))
     const trueAltitude = pressureAlt + (pressureAlt * isaDeviation / (273 + isaTemp));
 
     setResult({
@@ -86,128 +72,128 @@ export default function AltitudesHeightsScreen({ navigation }) {
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={{ flex: 1 }} 
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
-      <ScrollView 
-        style={styles.container} 
+      <ScrollView
+        style={styles.container}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.content}>
-        <Text style={styles.description}>
-          Calculate pressure altitude, density altitude, true altitude, and height AGL
-        </Text>
+          <Text style={styles.description}>
+            Calculate pressure altitude, density altitude, true altitude, and height AGL
+          </Text>
 
-        <InputField
-          label="Indicated Altitude - feet"
-          value={indicatedAlt}
-          onChangeText={setIndicatedAlt}
-          placeholder=""
-          keyboardType="numeric"
-        />
+          <InputField
+            label="Indicated Altitude - feet"
+            value={indicatedAlt}
+            onChangeText={setIndicatedAlt}
+            placeholder=""
+            keyboardType="numeric"
+          />
 
-        <InputField
-          label="QNH - hPa"
-          value={qnh}
-          onChangeText={setQnh}
-          placeholder=""
-          keyboardType="numeric"
-        />
+          <InputField
+            label="QNH - hPa"
+            value={qnh}
+            onChangeText={setQnh}
+            placeholder=""
+            keyboardType="numeric"
+          />
 
-        <InputField
-          label="OAT (Outside Air Temp at altitude) - °C"
-          value={oat}
-          onChangeText={setOat}
-          placeholder="Optional (defaults to ISA)"
-          keyboardType="numeric"
-        />
-        <Text style={styles.fieldHint}>
-          💡 Enter the actual temperature at your current altitude, not ground temperature
-        </Text>
+          <InputField
+            label="OAT (Outside Air Temp at altitude) - °C"
+            value={oat}
+            onChangeText={setOat}
+            placeholder="Optional (defaults to ISA)"
+            keyboardType="numeric"
+          />
+          <Text style={styles.fieldHint}>
+            💡 Enter the actual temperature at your current altitude, not ground temperature
+          </Text>
 
-        <InputField
-          label="Field Elevation - feet (optional)"
-          value={elevation}
-          onChangeText={setElevation}
-          placeholder=""
-          keyboardType="numeric"
-        />
+          <InputField
+            label="Field Elevation - feet (optional)"
+            value={elevation}
+            onChangeText={setElevation}
+            placeholder=""
+            keyboardType="numeric"
+          />
 
-        <Button 
-          title="CALCULATE" 
-          onPress={handleCalculate}
-        />
+          <Button
+            title="CALCULATE"
+            onPress={handleCalculate}
+          />
 
-        {error && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        )}
+          {error && (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          )}
 
-        {result && (
-          <View style={styles.resultContainer}>
-            <View style={styles.infoBox}>
-              <Text style={styles.infoTitle}>Temperature Info:</Text>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>OAT:</Text>
-                <Text style={styles.infoValue}>{result.oat}°C</Text>
+          {result && (
+            <View style={styles.resultContainer}>
+              <View style={styles.infoBox}>
+                <Text style={styles.infoTitle}>Temperature Info:</Text>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>OAT:</Text>
+                  <Text style={styles.infoValue}>{result.oat}°C</Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>ISA at this altitude:</Text>
+                  <Text style={styles.infoValue}>{result.isaTemp}°C</Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>ISA Deviation:</Text>
+                  <Text style={[
+                    styles.infoValue,
+                    { color: parseFloat(result.isaDeviation) > 0 ? '#EF4444' : '#3B82F6' }
+                  ]}>
+                    {result.isaDeviation > 0 ? '+' : ''}{result.isaDeviation}°C
+                  </Text>
+                </View>
               </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>ISA at this altitude:</Text>
-                <Text style={styles.infoValue}>{result.isaTemp}°C</Text>
+
+              <View style={styles.resultBox}>
+                <Text style={styles.resultLabel}>Indicated Altitude:</Text>
+                <Text style={styles.resultValue}>{result.indicated} ft</Text>
+                <Text style={styles.resultNote}>Read from altimeter</Text>
               </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>ISA Deviation:</Text>
-                <Text style={[
-                  styles.infoValue,
-                  { color: parseFloat(result.isaDeviation) > 0 ? '#EF4444' : '#3B82F6' }
-                ]}>
-                  {result.isaDeviation > 0 ? '+' : ''}{result.isaDeviation}°C
+
+              <View style={styles.resultBox}>
+                <Text style={styles.resultLabel}>Pressure Altitude:</Text>
+                <Text style={styles.resultValue}>{result.pressure} ft</Text>
+                <Text style={styles.resultNote}>Altitude with QNH set to 1013 hPa</Text>
+              </View>
+
+              <View style={styles.resultBox}>
+                <Text style={styles.resultLabel}>True Altitude:</Text>
+                <Text style={styles.resultValue}>{result.trueAltitude} ft</Text>
+                <Text style={styles.resultNote}>Actual height above MSL (accounting for temp)</Text>
+              </View>
+
+              <View style={[styles.resultBox, styles.densityBox]}>
+                <Text style={styles.resultLabel}>Density Altitude:</Text>
+                <Text style={[styles.resultValue, styles.densityValue]}>
+                  {result.density} ft
+                </Text>
+                <Text style={styles.resultNote}>
+                  Affects aircraft performance
+                  {parseFloat(result.isaDeviation) > 0 && ' ⚠️ High DA reduces performance'}
                 </Text>
               </View>
-            </View>
 
-            <View style={styles.resultBox}>
-              <Text style={styles.resultLabel}>Indicated Altitude:</Text>
-              <Text style={styles.resultValue}>{result.indicated} ft</Text>
-              <Text style={styles.resultNote}>Read from altimeter</Text>
+              <View style={styles.resultBox}>
+                <Text style={styles.resultLabel}>Height AGL:</Text>
+                <Text style={styles.resultValue}>{result.heightAGL} ft</Text>
+                <Text style={styles.resultNote}>Height above ground level</Text>
+              </View>
             </View>
-
-            <View style={styles.resultBox}>
-              <Text style={styles.resultLabel}>Pressure Altitude:</Text>
-              <Text style={styles.resultValue}>{result.pressure} ft</Text>
-              <Text style={styles.resultNote}>Altitude with QNH set to 1013 hPa</Text>
-            </View>
-
-            <View style={styles.resultBox}>
-              <Text style={styles.resultLabel}>True Altitude:</Text>
-              <Text style={styles.resultValue}>{result.trueAltitude} ft</Text>
-              <Text style={styles.resultNote}>Actual height above MSL (accounting for temp)</Text>
-            </View>
-
-            <View style={[styles.resultBox, styles.densityBox]}>
-              <Text style={styles.resultLabel}>Density Altitude:</Text>
-              <Text style={[styles.resultValue, styles.densityValue]}>
-                {result.density} ft
-              </Text>
-              <Text style={styles.resultNote}>
-                Affects aircraft performance
-                {parseFloat(result.isaDeviation) > 0 && ' ⚠️ High DA reduces performance'}
-              </Text>
-            </View>
-
-            <View style={styles.resultBox}>
-              <Text style={styles.resultLabel}>Height AGL:</Text>
-              <Text style={styles.resultValue}>{result.heightAGL} ft</Text>
-              <Text style={styles.resultNote}>Height above ground level</Text>
-            </View>
-          </View>
-        )}
-      </View>
-    </ScrollView>
+          )}
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }

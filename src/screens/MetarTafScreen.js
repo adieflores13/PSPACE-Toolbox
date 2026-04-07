@@ -29,7 +29,7 @@ export default function MetarTafScreen({ navigation }) {
 
   const handleGetWeather = async () => {
     Keyboard.dismiss();
-    
+
     if (!airport.trim()) {
       setError('Please enter at least one airport code');
       return;
@@ -41,10 +41,10 @@ export default function MetarTafScreen({ navigation }) {
 
     // Split by spaces to handle multiple airports
     const airports = airport.toUpperCase().trim().split(/\s+/);
-    
+
     // Remove duplicates
     const uniqueAirports = [...new Set(airports)];
-    
+
     const fetchedResults = [];
     const failedAirports = [];
 
@@ -56,80 +56,78 @@ export default function MetarTafScreen({ navigation }) {
         failedAirports.push(code);
       }
     }
-    
+
     setLoading(false);
-    
+
     if (fetchedResults.length > 0) {
       setResults(fetchedResults);
     }
-    
+
     if (failedAirports.length > 0) {
       if (failedAirports.length === uniqueAirports.length) {
-        // All airports failed
         setError(`Unable to find weather data for: ${failedAirports.join(', ')}. Please check the airport code(s) and try again.`);
       } else {
-        // Some succeeded, some failed
         setError(`Weather data retrieved for some airports. Unable to find data for: ${failedAirports.join(', ')}`);
       }
     }
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={{ flex: 1 }} 
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
-      <ScrollView 
+      <ScrollView
         style={styles.container}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.content}>
-        <InputField
-          label="Airport Code(s)"
-          value={airport}
-          onChangeText={setAirport}
-          placeholder=""
-        />
-        
-        <Text style={styles.hint}>Enter one or more ICAO codes (e.g., EGGP or EGGP EGCC)</Text>
-        
-        <Button 
-          title="Get METAR + TAF" 
-          onPress={handleGetWeather}
-        />
+          <InputField
+            label="Airport Code(s)"
+            value={airport}
+            onChangeText={setAirport}
+            placeholder=""
+          />
 
-        {loading && (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={styles.loadingText}>Fetching weather data...</Text>
-          </View>
-        )}
+          <Text style={styles.hint}>Enter one or more ICAO codes (e.g., EGGP or EGGP EGCC)</Text>
 
-        {error && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        )}
+          <Button
+            title="Get METAR + TAF"
+            onPress={handleGetWeather}
+          />
 
-        {results.length > 0 && results.map((result, index) => (
-          <View key={index} style={styles.resultContainer}>
-            <Text style={styles.airportCode}>{result.airport}:</Text>
-            
-            <View style={styles.dataSection}>
-              <Text style={styles.label}>METAR:</Text>
-              <Text style={styles.dataText}>{result.metar}</Text>
+          {loading && (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={colors.primary} />
+              <Text style={styles.loadingText}>Fetching weather data...</Text>
             </View>
-            
-            <View style={styles.dataSection}>
-              <Text style={styles.label}>TAF:</Text>
-              <Text style={styles.dataText}>{result.taf}</Text>
+          )}
+
+          {error && (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
             </View>
-          </View>
-        ))}
-      </View>
-    </ScrollView>
+          )}
+
+          {results.length > 0 && results.map((result, index) => (
+            <View key={index} style={styles.resultContainer}>
+              <Text style={styles.airportCode}>{result.airport}:</Text>
+
+              <View style={styles.dataSection}>
+                <Text style={styles.label}>METAR:</Text>
+                <Text style={styles.dataText}>{result.metar}</Text>
+              </View>
+
+              <View style={styles.dataSection}>
+                <Text style={styles.label}>TAF:</Text>
+                <Text style={styles.dataText}>{result.taf}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }

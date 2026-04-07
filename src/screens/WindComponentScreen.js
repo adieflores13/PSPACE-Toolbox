@@ -31,13 +31,12 @@ export default function WindComponentScreen({ navigation }) {
   const handleCalculate = () => {
     Keyboard.dismiss();
     setError('');
-    
+
     if (!runway.trim() || !wind.trim()) {
       setError('Please fill in all fields');
       return;
     }
 
-    // Validate runway (01-36)
     const runwayNum = parseInt(runway);
     if (isNaN(runwayNum) || runwayNum < 1 || runwayNum > 36) {
       setError('Runway must be between 01 and 36');
@@ -53,23 +52,22 @@ export default function WindComponentScreen({ navigation }) {
     const windDirection = windParts[0];
     const windSpeed = windParts[1];
 
-    // Format runway to 2 digits
     const formattedRunway = runwayNum.toString().padStart(2, '0');
 
     const calculated = calculateWindComponent(formattedRunway, windDirection, windSpeed);
-    
+
     // Determine crosswind side
     const runwayHeading = parseInt(formattedRunway) * 10;
     const windDir = parseInt(windDirection);
-    
+
     // Calculate the relative angle (normalized to -180 to +180)
     let relativeAngle = windDir - runwayHeading;
     if (relativeAngle > 180) relativeAngle -= 360;
     if (relativeAngle < -180) relativeAngle += 360;
-    
+
     // Crosswind from right if wind is clockwise from runway heading
     const crosswindSide = relativeAngle > 0 ? 'Right' : 'Left';
-    
+
     setResult({
       ...calculated,
       windDirection,
@@ -92,146 +90,141 @@ export default function WindComponentScreen({ navigation }) {
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={{ flex: 1 }} 
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
-      <ScrollView 
-        style={styles.container} 
+      <ScrollView
+        style={styles.container}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.content}>
-        
-        <InputField
-          label="Runway (01-36)"
-          value={runway}
-          onChangeText={setRunway}
-          placeholder=""
-          keyboardType="numeric"
-        />
-        
-        <InputField
-          label="Wind (direction/speed)"
-          value={wind}
-          onChangeText={setWind}
-          placeholder=""
-          keyboardType="numbers-and-punctuation"
-        />
-        
-        <Button 
-          title="CALCULATE" 
-          onPress={handleCalculate}
-        />
+          <InputField
+            label="Runway (01-36)"
+            value={runway}
+            onChangeText={setRunway}
+            placeholder=""
+            keyboardType="numeric"
+          />
 
-        {error && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        )}
+          <InputField
+            label="Wind (direction/speed)"
+            value={wind}
+            onChangeText={setWind}
+            placeholder=""
+            keyboardType="numbers-and-punctuation"
+          />
 
-        {result && (
-          <View style={styles.resultContainer}>
-            <View style={styles.resultBox}>
-              <Text style={styles.resultLabel}>
-                {result.isHeadwind ? 'Headwind:' : 'Tailwind:'}
-              </Text>
-              <Text style={styles.resultValue}>
-                {Math.abs(result.headwind)} kts
-              </Text>
+          <Button
+            title="CALCULATE"
+            onPress={handleCalculate}
+          />
+
+          {error && (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
             </View>
+          )}
 
-            <View style={styles.resultBox}>
-              <Text style={styles.resultLabel}>
-                Crosswind ({result.crosswindSide}):
-              </Text>
-              <Text style={styles.resultValue}>{result.crosswind} kts</Text>
-            </View>
-
-            <View style={styles.diagramContainer}>
-              <Text style={styles.diagramTitle}>Visual Representation</Text>
-              
-              <View style={styles.visualBox}>
-                <Text style={styles.infoText}>
-                  Runway {result.runway} ({getRunwayHeading()}°) • Wind FROM {result.windDirection}°/{result.windSpeed}kts
+          {result && (
+            <View style={styles.resultContainer}>
+              <View style={styles.resultBox}>
+                <Text style={styles.resultLabel}>
+                  {result.isHeadwind ? 'Headwind:' : 'Tailwind:'}
                 </Text>
-                
-                <View style={styles.diagram}>
-                  {/* North indicator */}
-                  <View style={styles.compassContainer}>
-                    <Text style={styles.compassText}>N</Text>
-                    <Text style={styles.compassDegree}>360°</Text>
-                  </View>
-                  
-                  {/* Runway*/}
-                  <View style={styles.centerPoint}>
-                    <View 
-                      style={[
-                        styles.runwayLine,
-                        { transform: [{ rotate: `${getRunwayHeading()}deg` }] }
-                      ]}
-                    >
-                      <View style={styles.runwayRect}>
-                        <Text style={styles.runwayLabel}>{result.runway}</Text>
-                      </View>
-                      <View style={styles.aircraftContainer}>
-                        <Text style={styles.aircraftSymbol}>✈</Text>
+                <Text style={styles.resultValue}>
+                  {Math.abs(result.headwind)} kts
+                </Text>
+              </View>
+
+              <View style={styles.resultBox}>
+                <Text style={styles.resultLabel}>
+                  Crosswind ({result.crosswindSide}):
+                </Text>
+                <Text style={styles.resultValue}>{result.crosswind} kts</Text>
+              </View>
+
+              <View style={styles.diagramContainer}>
+                <Text style={styles.diagramTitle}>Visual Representation</Text>
+
+                <View style={styles.visualBox}>
+                  <Text style={styles.infoText}>
+                    Runway {result.runway} ({getRunwayHeading()}°) • Wind FROM {result.windDirection}°/{result.windSpeed}kts
+                  </Text>
+
+                  <View style={styles.diagram}>
+                    <View style={styles.compassContainer}>
+                      <Text style={styles.compassText}>N</Text>
+                      <Text style={styles.compassDegree}>360°</Text>
+                    </View>
+
+                    <View style={styles.centerPoint}>
+                      <View
+                        style={[
+                          styles.runwayLine,
+                          { transform: [{ rotate: `${getRunwayHeading()}deg` }] }
+                        ]}
+                      >
+                        <View style={styles.runwayRect}>
+                          <Text style={styles.runwayLabel}>{result.runway}</Text>
+                        </View>
+                        <View style={styles.aircraftContainer}>
+                          <Text style={styles.aircraftSymbol}>✈</Text>
+                        </View>
                       </View>
                     </View>
-                  </View>
-                  
-                  {/* Wind arrowww - showing FROM direction */}
-                  <View style={styles.centerPoint}>
-                    <View 
-                      style={[
-                        styles.windVector,
-                        { transform: [{ rotate: `${getWindOriginAngle()}deg` }] }
-                      ]}
-                    >
-                      {/* Wind comes FROM this direction (arrow points inward) */}
-                      <View style={styles.windArrowTip}>
-                        <Text style={styles.windArrowSymbol}>▼</Text>
-                      </View>
-                      <View style={styles.windLine} />
-                      <View style={styles.windLabel}>
-                        <Text style={styles.windLabelText}>WIND</Text>
-                        <Text style={styles.windDegreeText}>{result.windDirection}°</Text>
+
+                    <View style={styles.centerPoint}>
+                      <View
+                        style={[
+                          styles.windVector,
+                          { transform: [{ rotate: `${getWindOriginAngle()}deg` }] }
+                        ]}
+                      >
+                        {/* Wind comes FROM this direction (arrow points inward) */}
+                        <View style={styles.windArrowTip}>
+                          <Text style={styles.windArrowSymbol}>▼</Text>
+                        </View>
+                        <View style={styles.windLine} />
+                        <View style={styles.windLabel}>
+                          <Text style={styles.windLabelText}>WIND</Text>
+                          <Text style={styles.windDegreeText}>{result.windDirection}°</Text>
+                        </View>
                       </View>
                     </View>
-                  </View>
-                  
-                  {/* Angle arc indicator */}
-                  <View style={styles.angleIndicator}>
-                    <Text style={styles.angleText}>{result.relativeAngle}°</Text>
-                  </View>
-                </View>
-                
-                <View style={styles.legendBox}>
-                  <Text style={styles.legendTitle}>Wind Components:</Text>
-                  <View style={styles.componentRow}>
-                    <View style={styles.componentBox}>
-                      <Text style={styles.componentLabel}>Along Runway</Text>
-                      <Text style={styles.componentValue}>
-                        {result.isHeadwind ? 'Headwind' : 'Tailwind'}
-                      </Text>
-                      <Text style={styles.componentNumber}>{Math.abs(result.headwind)} kts</Text>
+
+                    <View style={styles.angleIndicator}>
+                      <Text style={styles.angleText}>{result.relativeAngle}°</Text>
                     </View>
-                    <View style={styles.componentBox}>
-                      <Text style={styles.componentLabel}>Across Runway</Text>
-                      <Text style={styles.componentValue}>
-                        Crosswind ({result.crosswindSide})
-                      </Text>
-                      <Text style={styles.componentNumber}>{result.crosswind} kts</Text>
+                  </View>
+
+                  <View style={styles.legendBox}>
+                    <Text style={styles.legendTitle}>Wind Components:</Text>
+                    <View style={styles.componentRow}>
+                      <View style={styles.componentBox}>
+                        <Text style={styles.componentLabel}>Along Runway</Text>
+                        <Text style={styles.componentValue}>
+                          {result.isHeadwind ? 'Headwind' : 'Tailwind'}
+                        </Text>
+                        <Text style={styles.componentNumber}>{Math.abs(result.headwind)} kts</Text>
+                      </View>
+                      <View style={styles.componentBox}>
+                        <Text style={styles.componentLabel}>Across Runway</Text>
+                        <Text style={styles.componentValue}>
+                          Crosswind ({result.crosswindSide})
+                        </Text>
+                        <Text style={styles.componentNumber}>{result.crosswind} kts</Text>
+                      </View>
                     </View>
                   </View>
                 </View>
               </View>
             </View>
-          </View>
-        )}
-      </View>
-    </ScrollView>
+          )}
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }

@@ -33,7 +33,7 @@ export default function WindCorrectedHeadingsScreen({ navigation }) {
   const handleCalculate = () => {
     Keyboard.dismiss();
     setError('');
-    
+
     if (!track.trim() || !tas.trim() || !wind.trim()) {
       setError('Please fill in all fields');
       return;
@@ -50,8 +50,7 @@ export default function WindCorrectedHeadingsScreen({ navigation }) {
     const windSpeed = windParts[1];
 
     const calculated = calculateWindCorrectedHeading(track, tas, windDirection, windSpeed);
-    
-    // Add input data to result for display
+
     setResult({
       ...calculated,
       track: track,
@@ -67,179 +66,176 @@ export default function WindCorrectedHeadingsScreen({ navigation }) {
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={{ flex: 1 }} 
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
-      <ScrollView 
-        style={styles.container} 
+      <ScrollView
+        style={styles.container}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.content}>
-        <InputField
-          label="Track (desired ground track)"
-          value={track}
-          onChangeText={setTrack}
-          placeholder=""
-          keyboardType="numeric"
-        />
-        
-        <InputField
-          label="TAS (True Airspeed)"
-          value={tas}
-          onChangeText={setTas}
-          placeholder=""
-          keyboardType="numeric"
-        />
-        
-        <InputField
-          label="Wind (direction/speed)"
-          value={wind}
-          onChangeText={setWind}
-          placeholder=""
-          keyboardType="numbers-and-punctuation"
-        />
-        
-        <Button 
-          title="CALCULATE" 
-          onPress={handleCalculate}
-        />
+          <InputField
+            label="Track (desired ground track)"
+            value={track}
+            onChangeText={setTrack}
+            placeholder=""
+            keyboardType="numeric"
+          />
 
-        {error && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        )}
+          <InputField
+            label="TAS (True Airspeed)"
+            value={tas}
+            onChangeText={setTas}
+            placeholder=""
+            keyboardType="numeric"
+          />
 
-        {result && (
-          <View style={styles.resultContainer}>
-            <View style={styles.resultBox}>
-              <Text style={styles.resultLabel}>Heading to Fly:</Text>
-              <Text style={styles.resultValue}>{result.heading}°</Text>
-              {result.drift !== undefined && (
-                <Text style={styles.resultSubtext}>
-                  Drift: {Math.abs(result.drift).toFixed(1)}° {getDriftDirection()}
-                </Text>
-              )}
+          <InputField
+            label="Wind (direction/speed)"
+            value={wind}
+            onChangeText={setWind}
+            placeholder=""
+            keyboardType="numbers-and-punctuation"
+          />
+
+          <Button
+            title="CALCULATE"
+            onPress={handleCalculate}
+          />
+
+          {error && (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
             </View>
+          )}
 
-            <View style={styles.resultBox}>
-              <Text style={styles.resultLabel}>Ground Speed:</Text>
-              <Text style={styles.resultValue}>{result.groundSpeed} kts</Text>
-            </View>
+          {result && (
+            <View style={styles.resultContainer}>
+              <View style={styles.resultBox}>
+                <Text style={styles.resultLabel}>Heading to Fly:</Text>
+                <Text style={styles.resultValue}>{result.heading}°</Text>
+                {result.drift !== undefined && (
+                  <Text style={styles.resultSubtext}>
+                    Drift: {Math.abs(result.drift).toFixed(1)}° {getDriftDirection()}
+                  </Text>
+                )}
+              </View>
 
-            <View style={styles.diagramContainer}>
-              <Text style={styles.diagramTitle}>Navigation Triangle</Text>
-              
-              <View style={styles.visualBox}>
-                <Text style={styles.infoText}>
-                  Track: {result.track}° • TAS: {result.tas} kts • Wind: {result.windDirection}°/{result.windSpeed} kts
-                </Text>
-                
-                <View style={styles.diagram}>
-                  {/* North indicator */}
-                  <View style={styles.compassContainer}>
-                    <Text style={styles.compassText}>N</Text>
-                    <Text style={styles.compassDegree}>360°</Text>
+              <View style={styles.resultBox}>
+                <Text style={styles.resultLabel}>Ground Speed:</Text>
+                <Text style={styles.resultValue}>{result.groundSpeed} kts</Text>
+              </View>
+
+              <View style={styles.diagramContainer}>
+                <Text style={styles.diagramTitle}>Navigation Triangle</Text>
+
+                <View style={styles.visualBox}>
+                  <Text style={styles.infoText}>
+                    Track: {result.track}° • TAS: {result.tas} kts • Wind: {result.windDirection}°/{result.windSpeed} kts
+                  </Text>
+
+                  <View style={styles.diagram}>
+                    <View style={styles.compassContainer}>
+                      <Text style={styles.compassText}>N</Text>
+                      <Text style={styles.compassDegree}>360°</Text>
+                    </View>
+
+                    {/* Track line (where you want to go) */}
+                    <View style={styles.centerPoint}>
+                      <View
+                        style={[
+                          styles.trackVector,
+                          { transform: [{ rotate: `${parseFloat(result.track)}deg` }] }
+                        ]}
+                      >
+                        <View style={styles.trackLine} />
+                        <View style={styles.trackArrow}>
+                          <Text style={styles.trackArrowSymbol}>▲</Text>
+                        </View>
+                        <View style={styles.trackLabel}>
+                          <Text style={styles.trackLabelText}>TRACK</Text>
+                          <Text style={styles.trackDegreeText}>{result.track}°</Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    {/* Heading line (where you point the aircraft) */}
+                    <View style={styles.centerPoint}>
+                      <View
+                        style={[
+                          styles.headingVector,
+                          { transform: [{ rotate: `${result.heading}deg` }] }
+                        ]}
+                      >
+                        <View style={styles.headingLine} />
+                        <View style={styles.aircraftContainer}>
+                          <Text style={styles.aircraftSymbol}>✈</Text>
+                        </View>
+                        <View style={styles.headingLabel}>
+                          <Text style={styles.headingLabelText}>HEADING</Text>
+                          <Text style={styles.headingDegreeText}>{result.heading}°</Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    <View style={styles.centerPoint}>
+                      <View
+                        style={[
+                          styles.windVector,
+                          { transform: [{ rotate: `${parseFloat(result.windDirection)}deg` }] }
+                        ]}
+                      >
+                        <View style={styles.windArrowTip}>
+                          <Text style={styles.windArrowSymbol}>▼</Text>
+                        </View>
+                        <View style={styles.windLine} />
+                        <View style={styles.windLabelSmall}>
+                          <Text style={styles.windLabelTextSmall}>WIND</Text>
+                          <Text style={styles.windDegreeTextSmall}>{result.windDirection}°</Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    <View style={styles.centerDot} />
                   </View>
-                  
-                  {/* Track line (where you want to go) */}
-                  <View style={styles.centerPoint}>
-                    <View 
-                      style={[
-                        styles.trackVector,
-                        { transform: [{ rotate: `${parseFloat(result.track)}deg` }] }
-                      ]}
-                    >
-                      <View style={styles.trackLine} />
-                      <View style={styles.trackArrow}>
-                        <Text style={styles.trackArrowSymbol}>▲</Text>
+
+                  <View style={styles.legendBox}>
+                    <Text style={styles.legendTitle}>Navigation Solution:</Text>
+                    <View style={styles.legendRow}>
+                      <View style={styles.legendItem}>
+                        <View style={[styles.legendIndicator, { backgroundColor: '#3B82F6' }]} />
+                        <Text style={styles.legendText}>Track: {result.track}° (desired ground track)</Text>
                       </View>
-                      <View style={styles.trackLabel}>
-                        <Text style={styles.trackLabelText}>TRACK</Text>
-                        <Text style={styles.trackDegreeText}>{result.track}°</Text>
+                      <View style={styles.legendItem}>
+                        <View style={[styles.legendIndicator, { backgroundColor: '#10B981' }]} />
+                        <Text style={styles.legendText}>Heading: {result.heading}° (aircraft pointing)</Text>
+                      </View>
+                      <View style={styles.legendItem}>
+                        <View style={[styles.legendIndicator, { backgroundColor: '#F59E0B' }]} />
+                        <Text style={styles.legendText}>Wind: FROM {result.windDirection}° at {result.windSpeed} kts</Text>
                       </View>
                     </View>
+
+                    {result.drift !== undefined && (
+                      <View style={styles.driftExplanation}>
+                        <Text style={styles.driftText}>
+                          💡 Fly heading {result.heading}° to maintain track {result.track}°
+                        </Text>
+                        <Text style={styles.driftText}>
+                          (Drift correction: {Math.abs(result.drift).toFixed(1)}° {getDriftDirection()})
+                        </Text>
+                      </View>
+                    )}
                   </View>
-                  
-                  {/* Heading line (where you point the aircraft) */}
-                  <View style={styles.centerPoint}>
-                    <View 
-                      style={[
-                        styles.headingVector,
-                        { transform: [{ rotate: `${result.heading}deg` }] }
-                      ]}
-                    >
-                      <View style={styles.headingLine} />
-                      <View style={styles.aircraftContainer}>
-                        <Text style={styles.aircraftSymbol}>✈</Text>
-                      </View>
-                      <View style={styles.headingLabel}>
-                        <Text style={styles.headingLabelText}>HEADING</Text>
-                        <Text style={styles.headingDegreeText}>{result.heading}°</Text>
-                      </View>
-                    </View>
-                  </View>
-                  
-                  {/* Wind vector */}
-                  <View style={styles.centerPoint}>
-                    <View 
-                      style={[
-                        styles.windVector,
-                        { transform: [{ rotate: `${parseFloat(result.windDirection)}deg` }] }
-                      ]}
-                    >
-                      <View style={styles.windArrowTip}>
-                        <Text style={styles.windArrowSymbol}>▼</Text>
-                      </View>
-                      <View style={styles.windLine} />
-                      <View style={styles.windLabelSmall}>
-                        <Text style={styles.windLabelTextSmall}>WIND</Text>
-                        <Text style={styles.windDegreeTextSmall}>{result.windDirection}°</Text>
-                      </View>
-                    </View>
-                  </View>
-                  
-                  {/* Center dot */}
-                  <View style={styles.centerDot} />
-                </View>
-                
-                <View style={styles.legendBox}>
-                  <Text style={styles.legendTitle}>Navigation Solution:</Text>
-                  <View style={styles.legendRow}>
-                    <View style={styles.legendItem}>
-                      <View style={[styles.legendIndicator, { backgroundColor: '#3B82F6' }]} />
-                      <Text style={styles.legendText}>Track: {result.track}° (desired ground track)</Text>
-                    </View>
-                    <View style={styles.legendItem}>
-                      <View style={[styles.legendIndicator, { backgroundColor: '#10B981' }]} />
-                      <Text style={styles.legendText}>Heading: {result.heading}° (aircraft pointing)</Text>
-                    </View>
-                    <View style={styles.legendItem}>
-                      <View style={[styles.legendIndicator, { backgroundColor: '#F59E0B' }]} />
-                      <Text style={styles.legendText}>Wind: FROM {result.windDirection}° at {result.windSpeed} kts</Text>
-                    </View>
-                  </View>
-                  
-                  {result.drift !== undefined && (
-                    <View style={styles.driftExplanation}>
-                      <Text style={styles.driftText}>
-                        💡 Fly heading {result.heading}° to maintain track {result.track}°
-                      </Text>
-                      <Text style={styles.driftText}>
-                        (Drift correction: {Math.abs(result.drift).toFixed(1)}° {getDriftDirection()})
-                      </Text>
-                    </View>
-                  )}
                 </View>
               </View>
             </View>
-          </View>
-        )}
-      </View>
-    </ScrollView>
+          )}
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
@@ -479,7 +475,6 @@ const styles = StyleSheet.create({
     color: colors.white,
     marginTop: 1,
   },
-  // Legend
   legendBox: {
     width: '100%',
     backgroundColor: colors.white,

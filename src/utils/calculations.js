@@ -42,7 +42,6 @@ export const convertGradient = (value, fromUnit) => {
   };
 };
 
-// Rate of Climb/Descent Calculation
 export const calculateRateOfClimbDescent = (gradient, groundSpeed) => {
   const ftPerNm = parseFloat(gradient);
   const gs = parseFloat(groundSpeed);
@@ -53,36 +52,26 @@ export const calculateRateOfClimbDescent = (gradient, groundSpeed) => {
   return Math.round(rate);
 };
 
-// Wind Corrected Heading Calculation
 export const calculateWindCorrectedHeading = (track, tas, windDirection, windSpeed) => {
   const trk = parseFloat(track);
   const airspeed = parseFloat(tas);
   const windDir = parseFloat(windDirection);
   const windSpd = parseFloat(windSpeed);
   
-  // Convert wind direction and track to radians
-  const trackRad = trk * Math.PI / 180;
-  const windDirRad = windDir * Math.PI / 180;
-  
-  // Calculate the angle between wind direction and track
   const relativeWindAngle = (windDir - trk) * Math.PI / 180;
   
   // Drift angle = arcsin(wind speed * sin(relative wind angle) / TAS)
   const driftAngleRad = Math.asin((windSpd * Math.sin(relativeWindAngle)) / airspeed);
   const driftAngleDeg = driftAngleRad * 180 / Math.PI;
   
-  // Changed from (trk - drift) to (trk + drift)
   let heading = trk + driftAngleDeg;
   
   // Normalize heading to 0-360 range
   if (heading < 0) heading += 360;
   if (heading >= 360) heading -= 360;
   
-  // Calculate the ground speed
-  // Headwind component = wind speed * cos(angle between wind and track)
-  const headwindComponent = windSpd * Math.cos(relativeWindAngle);
-  
   // Ground speed = TAS - headwind component (negative headwind = tailwind)
+  const headwindComponent = windSpd * Math.cos(relativeWindAngle);
   const groundSpeed = airspeed - headwindComponent;
   
   return {

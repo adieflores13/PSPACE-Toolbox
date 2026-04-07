@@ -65,26 +65,24 @@ export default function AirSpeedsScreen({ navigation }) {
   const calculateGroundSpeed = (tas, hdg, windDir, windSpd) => {
     const headingRad = hdg * Math.PI / 180;
     const windDirRad = windDir * Math.PI / 180;
-    
-    // Wind is FROM direction, so we need to reverse it (add 180°)
     const windTowardRad = windDirRad + Math.PI;
-    
+
     const windNorth = windSpd * Math.cos(windTowardRad);
     const windEast = windSpd * Math.sin(windTowardRad);
-    
+
     const acNorth = tas * Math.cos(headingRad);
     const acEast = tas * Math.sin(headingRad);
-    
+
     const gsNorth = acNorth + windNorth;
     const gsEast = acEast + windEast;
-    
+
     return Math.sqrt(gsNorth * gsNorth + gsEast * gsEast);
   };
 
   const handleCalculate = () => {
     Keyboard.dismiss();
     setError('');
-    
+
     if (!ias || !altitude) {
       setError('Please enter IAS and Altitude');
       return;
@@ -93,29 +91,21 @@ export default function AirSpeedsScreen({ navigation }) {
     const iasValue = parseFloat(ias);
     const altValue = parseFloat(altitude);
     const qnhValue = parseFloat(qnh);
-    
-    // Calculate pressure altitude
+
     const pressureAlt = calculatePressureAltitude(altValue, qnhValue);
-    
-    // OAT - use ISA if not provided
+
     let oatValue;
     if (oat && oat.trim() !== '') {
       oatValue = parseFloat(oat);
     } else {
-      // Default to ISA temperature at pressure altitude
       oatValue = 15 - (pressureAlt / 1000 * 1.98);
     }
 
-    // For light aircraft, CAS ≈ IAS
     const cas = iasValue;
-    
-    // Calculate TAS
+
     const tas = calculateTAS(cas, pressureAlt, oatValue);
-    
-    // Calculate Mach
     const mach = calculateMach(tas, oatValue);
-    
-    // Calculate Ground Speed if wind enabled
+
     let groundSpeed = null;
     if (includeWind) {
       if (!heading || !windDirection || !windSpeed) {
@@ -123,9 +113,9 @@ export default function AirSpeedsScreen({ navigation }) {
         return;
       }
       groundSpeed = calculateGroundSpeed(
-        tas, 
-        parseFloat(heading), 
-        parseFloat(windDirection), 
+        tas,
+        parseFloat(heading),
+        parseFloat(windDirection),
         parseFloat(windSpeed)
       );
     }
@@ -142,150 +132,150 @@ export default function AirSpeedsScreen({ navigation }) {
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={{ flex: 1 }} 
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
-      <ScrollView 
-        style={styles.container} 
+      <ScrollView
+        style={styles.container}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.content}>
-        <Text style={styles.description}>
-          Calculate IAS, CAS, TAS, Mach number, and optionally Ground Speed
-        </Text>
-
-        <InputField
-          label="IAS (Indicated Airspeed) - kts"
-          value={ias}
-          onChangeText={setIas}
-          placeholder=""
-          keyboardType="numeric"
-        />
-
-        <InputField
-          label="Indicated Altitude - feet"
-          value={altitude}
-          onChangeText={setAltitude}
-          placeholder=""
-          keyboardType="numeric"
-        />
-
-        <InputField
-          label="QNH - hPa"
-          value={qnh}
-          onChangeText={setQnh}
-          placeholder=""
-          keyboardType="numeric"
-        />
-
-        <InputField
-          label="OAT (Outside Air Temp at altitude) - °C"
-          value={oat}
-          onChangeText={setOat}
-          placeholder="Optional (defaults to ISA)"
-          keyboardType="numeric"
-        />
-
-        <View style={styles.windToggleContainer}>
-          <View style={styles.windToggleRow}>
-            <Text style={styles.windToggleLabel}>Include Ground Speed (with wind)</Text>
-            <Switch
-              value={includeWind}
-              onValueChange={setIncludeWind}
-              trackColor={{ false: '#D1D5DB', true: colors.primary }}
-              thumbColor={includeWind ? colors.white : '#F3F4F6'}
-            />
-          </View>
-          <Text style={styles.windToggleHint}>
-            Enable to calculate ground speed using wind data
+          <Text style={styles.description}>
+            Calculate IAS, CAS, TAS, Mach number, and optionally Ground Speed
           </Text>
-        </View>
 
-        {includeWind && (
-          <View style={styles.windInputsContainer}>
-            <Text style={styles.windSectionTitle}>Wind Data</Text>
-            
-            <InputField
-              label="Aircraft Heading - degrees"
-              value={heading}
-              onChangeText={setHeading}
-              placeholder=""
-              keyboardType="numeric"
-            />
+          <InputField
+            label="IAS (Indicated Airspeed) - kts"
+            value={ias}
+            onChangeText={setIas}
+            placeholder=""
+            keyboardType="numeric"
+          />
 
-            <InputField
-              label="Wind Direction (FROM) - degrees"
-              value={windDirection}
-              onChangeText={setWindDirection}
-              placeholder=""
-              keyboardType="numeric"
-            />
+          <InputField
+            label="Indicated Altitude - feet"
+            value={altitude}
+            onChangeText={setAltitude}
+            placeholder=""
+            keyboardType="numeric"
+          />
 
-            <InputField
-              label="Wind Speed - kts"
-              value={windSpeed}
-              onChangeText={setWindSpeed}
-              placeholder=""
-              keyboardType="numeric"
-            />
+          <InputField
+            label="QNH - hPa"
+            value={qnh}
+            onChangeText={setQnh}
+            placeholder=""
+            keyboardType="numeric"
+          />
+
+          <InputField
+            label="OAT (Outside Air Temp at altitude) - °C"
+            value={oat}
+            onChangeText={setOat}
+            placeholder="Optional (defaults to ISA)"
+            keyboardType="numeric"
+          />
+
+          <View style={styles.windToggleContainer}>
+            <View style={styles.windToggleRow}>
+              <Text style={styles.windToggleLabel}>Include Ground Speed (with wind)</Text>
+              <Switch
+                value={includeWind}
+                onValueChange={setIncludeWind}
+                trackColor={{ false: '#D1D5DB', true: colors.primary }}
+                thumbColor={includeWind ? colors.white : '#F3F4F6'}
+              />
+            </View>
+            <Text style={styles.windToggleHint}>
+              Enable to calculate ground speed using wind data
+            </Text>
           </View>
-        )}
 
-        <Button 
-          title="CALCULATE" 
-          onPress={handleCalculate}
-        />
+          {includeWind && (
+            <View style={styles.windInputsContainer}>
+              <Text style={styles.windSectionTitle}>Wind Data</Text>
 
-        {error && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        )}
+              <InputField
+                label="Aircraft Heading - degrees"
+                value={heading}
+                onChangeText={setHeading}
+                placeholder=""
+                keyboardType="numeric"
+              />
 
-        {result && (
-          <View style={styles.resultContainer}>
-            <View style={styles.infoBox}>
-              <Text style={styles.infoText}>
-                Pressure Altitude: {result.pressureAlt} ft • OAT: {result.oat}°C
-              </Text>
+              <InputField
+                label="Wind Direction (FROM) - degrees"
+                value={windDirection}
+                onChangeText={setWindDirection}
+                placeholder=""
+                keyboardType="numeric"
+              />
+
+              <InputField
+                label="Wind Speed - kts"
+                value={windSpeed}
+                onChangeText={setWindSpeed}
+                placeholder=""
+                keyboardType="numeric"
+              />
             </View>
+          )}
 
-            <View style={styles.resultBox}>
-              <Text style={styles.resultLabel}>IAS (Indicated Airspeed):</Text>
-              <Text style={styles.resultValue}>{result.ias} kts</Text>
+          <Button
+            title="CALCULATE"
+            onPress={handleCalculate}
+          />
+
+          {error && (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
             </View>
+          )}
 
-            <View style={styles.resultBox}>
-              <Text style={styles.resultLabel}>CAS (Calibrated Airspeed):</Text>
-              <Text style={styles.resultValue}>{result.cas} kts</Text>
-              <Text style={styles.resultNote}>≈ IAS for light aircraft</Text>
-            </View>
-
-            <View style={styles.resultBox}>
-              <Text style={styles.resultLabel}>TAS (True Airspeed):</Text>
-              <Text style={styles.resultValue}>{result.tas} kts</Text>
-            </View>
-
-            <View style={styles.resultBox}>
-              <Text style={styles.resultLabel}>Mach Number:</Text>
-              <Text style={styles.resultValue}>{result.mach}</Text>
-            </View>
-
-            {result.groundSpeed !== null && (
-              <View style={[styles.resultBox, styles.groundSpeedBox]}>
-                <Text style={styles.resultLabel}>Ground Speed:</Text>
-                <Text style={[styles.resultValue, styles.groundSpeedValue]}>
-                  {result.groundSpeed} kts
+          {result && (
+            <View style={styles.resultContainer}>
+              <View style={styles.infoBox}>
+                <Text style={styles.infoText}>
+                  Pressure Altitude: {result.pressureAlt} ft • OAT: {result.oat}°C
                 </Text>
               </View>
-            )}
-          </View>
-        )}
-      </View>
-    </ScrollView>
+
+              <View style={styles.resultBox}>
+                <Text style={styles.resultLabel}>IAS (Indicated Airspeed):</Text>
+                <Text style={styles.resultValue}>{result.ias} kts</Text>
+              </View>
+
+              <View style={styles.resultBox}>
+                <Text style={styles.resultLabel}>CAS (Calibrated Airspeed):</Text>
+                <Text style={styles.resultValue}>{result.cas} kts</Text>
+                <Text style={styles.resultNote}>≈ IAS for light aircraft</Text>
+              </View>
+
+              <View style={styles.resultBox}>
+                <Text style={styles.resultLabel}>TAS (True Airspeed):</Text>
+                <Text style={styles.resultValue}>{result.tas} kts</Text>
+              </View>
+
+              <View style={styles.resultBox}>
+                <Text style={styles.resultLabel}>Mach Number:</Text>
+                <Text style={styles.resultValue}>{result.mach}</Text>
+              </View>
+
+              {result.groundSpeed !== null && (
+                <View style={[styles.resultBox, styles.groundSpeedBox]}>
+                  <Text style={styles.resultLabel}>Ground Speed:</Text>
+                  <Text style={[styles.resultValue, styles.groundSpeedValue]}>
+                    {result.groundSpeed} kts
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }

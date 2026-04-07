@@ -37,7 +37,7 @@ export default function ClimbDescentScreen({ navigation }) {
   const handleConvert = () => {
     Keyboard.dismiss();
     let result;
-    
+
     if (lastEditedField === 'deg' && gradientDeg) {
       result = convertGradient(gradientDeg, 'degrees');
       setGradientPct(result.percent);
@@ -66,84 +66,84 @@ export default function ClimbDescentScreen({ navigation }) {
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={{ flex: 1 }} 
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
-      <ScrollView 
-        style={styles.container} 
+      <ScrollView
+        style={styles.container}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.content}>
-        <Text style={styles.sectionTitle}>Gradient Conversion</Text>
-        
-        <InputField
-          label="Gradient (°)"
-          value={gradientDeg}
-          onChangeText={(text) => {
-            setGradientDeg(text);
-            setLastEditedField('deg');
-          }}
-          placeholder=""
-          keyboardType="decimal-pad"
-        />
-        
-        <InputField
-          label="Gradient (%)"
-          value={gradientPct}
-          onChangeText={(text) => {
-            setGradientPct(text);
-            setLastEditedField('pct');
-          }}
-          placeholder=""
-          keyboardType="decimal-pad"
-        />
-        
-        <InputField
-          label="Gradient (ft/nm)"
-          value={gradientFtNm}
-          onChangeText={(text) => {
-            setGradientFtNm(text);
-            setLastEditedField('ftNm');
-          }}
-          placeholder=""
-          keyboardType="decimal-pad"
-        />
-        
-        <Button 
-          title="CONVERT" 
-          onPress={handleConvert}
-        />
+          <Text style={styles.sectionTitle}>Gradient Conversion</Text>
 
-        <View style={styles.divider} />
+          <InputField
+            label="Gradient (°)"
+            value={gradientDeg}
+            onChangeText={(text) => {
+              setGradientDeg(text);
+              setLastEditedField('deg');
+            }}
+            placeholder=""
+            keyboardType="decimal-pad"
+          />
 
-        <Text style={styles.sectionTitle}>Rate of Climb/Descent</Text>
-        
-        <InputField
-          label="Ground Speed (kts)"
-          value={groundSpeed}
-          onChangeText={setGroundSpeed}
-          placeholder=""
-          keyboardType="numeric"
-        />
-        
-        <Button 
-          title="CALCULATE RATE" 
-          onPress={handleCalculateRate}
-        />
+          <InputField
+            label="Gradient (%)"
+            value={gradientPct}
+            onChangeText={(text) => {
+              setGradientPct(text);
+              setLastEditedField('pct');
+            }}
+            placeholder=""
+            keyboardType="decimal-pad"
+          />
 
-        {rate !== null && (
-          <View style={styles.resultContainer}>
-            <View style={styles.resultBox}>
-              <Text style={styles.resultLabel}>Rate of Climb/Descent:</Text>
-              <Text style={styles.resultValue}>{rate} ft/min</Text>
+          <InputField
+            label="Gradient (ft/nm)"
+            value={gradientFtNm}
+            onChangeText={(text) => {
+              setGradientFtNm(text);
+              setLastEditedField('ftNm');
+            }}
+            placeholder=""
+            keyboardType="decimal-pad"
+          />
+
+          <Button
+            title="CONVERT"
+            onPress={handleConvert}
+          />
+
+          <View style={styles.divider} />
+
+          <Text style={styles.sectionTitle}>Rate of Climb/Descent</Text>
+
+          <InputField
+            label="Ground Speed (kts)"
+            value={groundSpeed}
+            onChangeText={setGroundSpeed}
+            placeholder=""
+            keyboardType="numeric"
+          />
+
+          <Button
+            title="CALCULATE RATE"
+            onPress={handleCalculateRate}
+          />
+
+          {rate !== null && (
+            <View style={styles.resultContainer}>
+              <View style={styles.resultBox}>
+                <Text style={styles.resultLabel}>Rate of Climb/Descent:</Text>
+                <Text style={styles.resultValue}>{rate} ft/min</Text>
+              </View>
             </View>
-          </View>
-        )}
-      </View>
-    </ScrollView>
+          )}
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
