@@ -1,194 +1,50 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, TouchableOpacity, Keyboard } from 'react-native';
-import InputField from '../components/InputField';
-import Button from '../components/Button';
-import colors from '../constants/colors';
+import React, { useMemo, useState } from 'react';
+import { Screen, Section, FieldRow, Answer, useHeaderReset } from '../components/ui';
 import { convertGradient, calculateRateOfClimbDescent } from '../utils/calculations';
+import { num, fmtInt } from '../utils/input';
+
+const UNIT_KEY = { deg: 'degrees', pct: 'percent', ftNm: 'ftPerNm' };
 
 export default function ClimbDescentScreen({ navigation }) {
-  const [gradientDeg, setGradientDeg] = useState('');
-  const [gradientPct, setGradientPct] = useState('');
-  const [gradientFtNm, setGradientFtNm] = useState('');
+  // The field the pilot typed in drives the other two.
+  const [source, setSource] = useState({ field: null, text: '' });
   const [groundSpeed, setGroundSpeed] = useState('');
-  const [converted, setConverted] = useState(null);
-  const [rate, setRate] = useState(null);
-  const [lastEditedField, setLastEditedField] = useState(null);
 
-  React.useLayoutEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <TouchableOpacity onPress={handleReset} style={{ marginRight: 15 }}>
-          <Text style={{ color: colors.white, fontSize: 16, fontWeight: '600' }}>Reset</Text>
-        </TouchableOpacity>
-      ),
-    });
-  }, [navigation]);
-
-  const handleReset = () => {
-    setGradientDeg('');
-    setGradientPct('');
-    setGradientFtNm('');
+  const reset = () => {
+    setSource({ field: null, text: '' });
     setGroundSpeed('');
-    setConverted(null);
-    setRate(null);
-    setLastEditedField(null);
   };
+  useHeaderReset(navigation, reset, !!(source.text || groundSpeed));
 
-  const handleConvert = () => {
-    Keyboard.dismiss();
-    let result;
+  const converted = useMemo(() => {
+    if (!source.field || num(source.text) === null) return null;
+    return convertGradient(num(source.text), UNIT_KEY[source.field]);
+  }, [source]);
 
-    if (lastEditedField === 'deg' && gradientDeg) {
-      result = convertGradient(gradientDeg, 'degrees');
-      setGradientPct(result.percent);
-      setGradientFtNm(result.ftPerNm);
-      setConverted(result);
-    } else if (lastEditedField === 'pct' && gradientPct) {
-      result = convertGradient(gradientPct, 'percent');
-      setGradientDeg(result.degrees);
-      setGradientFtNm(result.ftPerNm);
-      setConverted(result);
-    } else if (lastEditedField === 'ftNm' && gradientFtNm) {
-      result = convertGradient(gradientFtNm, 'ftPerNm');
-      setGradientDeg(result.degrees);
-      setGradientPct(result.percent);
-      setConverted(result);
-    }
+  const valueFor = (field, key) => {
+    if (source.field === field) return source.text;
+    return converted ? converted[key] : '';
   };
+  const edit = (field) => (text) => setSource({ field, text });
 
-  const handleCalculateRate = () => {
-    Keyboard.dismiss();
-    if (!gradientFtNm || !groundSpeed) {
-      return;
-    }
-    const calculatedRate = calculateRateOfClimbDescent(gradientFtNm, groundSpeed);
-    setRate(calculatedRate);
-  };
+  const rate = useMemo(() => {
+    const gs = num(groundSpeed);
+    if (!converted || gs === null) return null;
+    return calculateRateOfClimbDescent(converted.ftPerNm, gs);
+  }, [converted, groundSpeed]);
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-    >
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.content}>
-          <Text style={styles.sectionTitle}>Gradient Conversion</Text>
+    <Screen>
+      <Section>
+        <FieldRow label="Angle" value={valueFor('deg', 'degrees')} onChangeText={edit('deg')} placeholder="3.00" unit="°" />
+        <FieldRow label="Percent" value={valueFor('pct', 'percent')} onChangeText={edit('pct')} placeholder="5.24" unit="%" />
+        <FieldRow label="ft / NM" value={valueFor('ftNm', 'ftPerNm')} onChangeText={edit('ftNm')} placeholder="318" />
+      </Section>
 
-          <InputField
-            label="Gradient (°)"
-            value={gradientDeg}
-            onChangeText={(text) => {
-              setGradientDeg(text);
-              setLastEditedField('deg');
-            }}
-            placeholder=""
-            keyboardType="decimal-pad"
-          />
-
-          <InputField
-            label="Gradient (%)"
-            value={gradientPct}
-            onChangeText={(text) => {
-              setGradientPct(text);
-              setLastEditedField('pct');
-            }}
-            placeholder=""
-            keyboardType="decimal-pad"
-          />
-
-          <InputField
-            label="Gradient (ft/nm)"
-            value={gradientFtNm}
-            onChangeText={(text) => {
-              setGradientFtNm(text);
-              setLastEditedField('ftNm');
-            }}
-            placeholder=""
-            keyboardType="decimal-pad"
-          />
-
-          <Button
-            title="CONVERT"
-            onPress={handleConvert}
-          />
-
-          <View style={styles.divider} />
-
-          <Text style={styles.sectionTitle}>Rate of Climb/Descent</Text>
-
-          <InputField
-            label="Ground Speed (kts)"
-            value={groundSpeed}
-            onChangeText={setGroundSpeed}
-            placeholder=""
-            keyboardType="numeric"
-          />
-
-          <Button
-            title="CALCULATE RATE"
-            onPress={handleCalculateRate}
-          />
-
-          {rate !== null && (
-            <View style={styles.resultContainer}>
-              <View style={styles.resultBox}>
-                <Text style={styles.resultLabel}>Rate of Climb/Descent:</Text>
-                <Text style={styles.resultValue}>{rate} ft/min</Text>
-              </View>
-            </View>
-          )}
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      <Section>
+        <FieldRow label="Ground speed" value={groundSpeed} onChangeText={setGroundSpeed} placeholder="90" keyboardType="number-pad" unit="kt" />
+        {rate !== null ? <Answer label="Rate" value={fmtInt(rate)} unit="ft/min" /> : null}
+      </Section>
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  scrollContent: {
-    paddingBottom: 150,
-  },
-  content: {
-    padding: 20,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.primary,
-    marginBottom: 15,
-    marginTop: 10,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: colors.border,
-    marginVertical: 25,
-  },
-  resultContainer: {
-    marginTop: 20,
-  },
-  resultBox: {
-    backgroundColor: colors.white,
-    padding: 20,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  resultLabel: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    marginBottom: 5,
-  },
-  resultValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: colors.primary,
-  },
-});

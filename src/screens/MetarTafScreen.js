@@ -1,202 +1,119 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform, TouchableOpacity, Keyboard } from 'react-native';
-import InputField from '../components/InputField';
-import Button from '../components/Button';
-import colors from '../constants/colors';
-import { getMetarTaf } from '../utils/metarApi';
+import { View, Text, StyleSheet, Keyboard } from 'react-native';
+import { Screen, Section, FieldRow, PrimaryButton, Notice, useHeaderReset } from '../components/ui';
+import { getMetarTaf, isIcaoCode, formatAge, tafLines, METAR_STALE_MS, TAF_STALE_MS } from '../utils/metarApi';
+import { useTheme, type, space, monoFamily } from '../theme';
+
+function Report({ label, text, lines, time, staleAfter }) {
+  const t = useTheme();
+  const age = formatAge(time);
+  const stale = time && Date.now() - time > staleAfter;
+  return (
+    <View style={styles.report}>
+      <View style={styles.reportHead}>
+        <Text style={[type.footnote, styles.reportLabel, { color: t.secondaryLabel }]}>{label}</Text>
+        {age ? (
+          <Text style={[type.footnote, { color: stale ? t.warning : t.secondaryLabel, fontWeight: stale ? '700' : '400' }]}>
+            {stale ? `Old · ${age}` : age}
+          </Text>
+        ) : null}
+      </View>
+      {(lines || [text]).map((line, i) => (
+        <Text
+          key={i}
+          selectable
+          style={[styles.raw, { color: t.label, paddingLeft: i > 0 ? space.l : 0 }]}
+        >
+          {line}
+        </Text>
+      ))}
+    </View>
+  );
+}
 
 export default function MetarTafScreen({ navigation }) {
   const [airport, setAirport] = useState('');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState([]);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
 
-  React.useLayoutEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <TouchableOpacity onPress={handleReset} style={{ marginRight: 15 }}>
-          <Text style={{ color: colors.white, fontSize: 16, fontWeight: '600' }}>Reset</Text>
-        </TouchableOpacity>
-      ),
-    });
-  }, [navigation]);
-
-  const handleReset = () => {
+  const reset = () => {
     setAirport('');
     setResults([]);
-    setError('');
+    setError(null);
   };
+  useHeaderReset(navigation, reset, !!(airport || results.length || error));
 
   const handleGetWeather = async () => {
     Keyboard.dismiss();
-
     if (!airport.trim()) {
-      setError('Please enter at least one airport code');
+      setError({ tone: 'danger', text: 'Enter an ICAO code, e.g. RPLL.' });
+      return;
+    }
+
+    const uniqueAirports = [...new Set(airport.toUpperCase().trim().split(/[\s,]+/))];
+    const notCodes = uniqueAirports.filter((c) => !isIcaoCode(c));
+    if (notCodes.length) {
+      setError({ tone: 'danger', text: `${notCodes.join(', ')}: use 4-character ICAO codes, e.g. RPLL.` });
       return;
     }
 
     setLoading(true);
-    setError('');
+    setError(null);
     setResults([]);
 
-    // Split by spaces to handle multiple airports
-    const airports = airport.toUpperCase().trim().split(/\s+/);
-
-    // Remove duplicates
-    const uniqueAirports = [...new Set(airports)];
-
-    const fetchedResults = [];
-    const failedAirports = [];
-
+    const fetched = [];
+    const failed = [];
     for (const code of uniqueAirports) {
       const data = await getMetarTaf(code);
-      if (data.success) {
-        fetchedResults.push(data);
-      } else {
-        failedAirports.push(code);
-      }
+      if (data.success) fetched.push(data);
+      else failed.push(code);
     }
 
     setLoading(false);
-
-    if (fetchedResults.length > 0) {
-      setResults(fetchedResults);
-    }
-
-    if (failedAirports.length > 0) {
-      if (failedAirports.length === uniqueAirports.length) {
-        setError(`Unable to find weather data for: ${failedAirports.join(', ')}. Please check the airport code(s) and try again.`);
-      } else {
-        setError(`Weather data retrieved for some airports. Unable to find data for: ${failedAirports.join(', ')}`);
-      }
+    setResults(fetched);
+    if (failed.length) {
+      setError(
+        failed.length === uniqueAirports.length
+          ? { tone: 'danger', text: `No reports for ${failed.join(', ')}. Check the code or your connection.` }
+          : { tone: 'warning', text: `No reports for ${failed.join(', ')}.` }
+      );
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-    >
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.content}>
-          <InputField
-            label="Airport Code(s)"
-            value={airport}
-            onChangeText={setAirport}
-            placeholder=""
-          />
+    <Screen>
+      <Section>
+        <FieldRow
+          label="Airports"
+          value={airport}
+          onChangeText={setAirport}
+          placeholder="RPLL RPVM"
+          keyboardType="default"
+          autoCapitalize="characters"
+          wide
+          returnKeyType="search"
+          onSubmitEditing={handleGetWeather}
+        />
+      </Section>
+      <PrimaryButton title="Get weather" onPress={handleGetWeather} loading={loading} />
 
-          <Text style={styles.hint}>Enter one or more ICAO codes (e.g., EGGP or EGGP EGCC)</Text>
+      {error ? <Notice tone={error.tone} title={error.title} text={error.text} /> : null}
 
-          <Button
-            title="Get METAR + TAF"
-            onPress={handleGetWeather}
-          />
+      {results.map((r) => (
+        <Section key={r.airport} title={r.airport}>
+          <Report label="METAR" text={r.metar} time={r.metarTime} staleAfter={METAR_STALE_MS} />
+          <Report label="TAF" text={r.taf} lines={tafLines(r.taf)} time={r.tafTime} staleAfter={TAF_STALE_MS} />
+        </Section>
+      ))}
 
-          {loading && (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={colors.primary} />
-              <Text style={styles.loadingText}>Fetching weather data...</Text>
-            </View>
-          )}
-
-          {error && (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>{error}</Text>
-            </View>
-          )}
-
-          {results.length > 0 && results.map((result, index) => (
-            <View key={index} style={styles.resultContainer}>
-              <Text style={styles.airportCode}>{result.airport}:</Text>
-
-              <View style={styles.dataSection}>
-                <Text style={styles.label}>METAR:</Text>
-                <Text style={styles.dataText}>{result.metar}</Text>
-              </View>
-
-              <View style={styles.dataSection}>
-                <Text style={styles.label}>TAF:</Text>
-                <Text style={styles.dataText}>{result.taf}</Text>
-              </View>
-            </View>
-          ))}
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  scrollContent: {
-    paddingBottom: 150,
-  },
-  content: {
-    padding: 20,
-  },
-  hint: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginTop: -5,
-    marginBottom: 10,
-    fontStyle: 'italic',
-  },
-  loadingContainer: {
-    marginTop: 30,
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 10,
-    color: colors.textSecondary,
-  },
-  errorContainer: {
-    marginTop: 20,
-    padding: 15,
-    backgroundColor: '#FEF3C7',
-    borderRadius: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.warning,
-  },
-  errorText: {
-    color: '#92400E',
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  resultContainer: {
-    marginTop: 20,
-  },
-  airportCode: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.primary,
-    marginBottom: 15,
-  },
-  dataSection: {
-    marginBottom: 20,
-    backgroundColor: colors.white,
-    padding: 15,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.primary,
-    marginBottom: 8,
-  },
-  dataText: {
-    fontSize: 14,
-    color: colors.text,
-    lineHeight: 20,
-  },
+  report: { padding: space.l, gap: 2 },
+  reportHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 },
+  reportLabel: { fontWeight: '700', letterSpacing: 0.4 },
+  raw: { fontFamily: monoFamily, fontSize: 14, lineHeight: 21 },
 });

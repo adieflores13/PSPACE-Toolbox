@@ -1,47 +1,41 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Image, StyleSheet, Animated } from 'react-native';
+import { View, Image, StyleSheet, Animated, Easing, AccessibilityInfo, useWindowDimensions } from 'react-native';
 
+// Brief branded hand-off from the native splash (same white ground, same logo),
+// then straight to the toolbox. Reduce Motion skips the movement.
 export default function SplashScreen({ onFinish }) {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+  const opacity = useRef(new Animated.Value(1)).current;
+  const scale = useRef(new Animated.Value(1)).current;
+  const { width } = useWindowDimensions();
+  const size = Math.min(width * 0.8, 340);
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 1000,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        tension: 10,
-        friction: 3,
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    const timer = setTimeout(() => {
-      onFinish();
-    }, 3000);
-
-    return () => clearTimeout(timer);
+    let cancelled = false;
+    AccessibilityInfo.isReduceMotionEnabled()
+      .catch(() => false)
+      .then((reduce) => {
+        if (cancelled) return;
+        const out = reduce
+          ? Animated.timing(opacity, { toValue: 0, duration: 200, delay: 300, useNativeDriver: true })
+          : Animated.parallel([
+              Animated.timing(opacity, { toValue: 0, duration: 280, delay: 350, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+              Animated.timing(scale, { toValue: 1.04, duration: 280, delay: 350, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+            ]);
+        out.start(() => !cancelled && onFinish());
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
     <View style={styles.container}>
-      <Animated.View
-        style={[
-          styles.logoContainer,
-          {
-            opacity: fadeAnim,
-            transform: [{ scale: scaleAnim }],
-          }
-        ]}
-      >
+      <Animated.View style={{ opacity, transform: [{ scale }] }}>
         <Image
           source={require('../../assets/logo.png')}
-          style={styles.logo}
+          style={{ width: size, height: size * 1.43 }}
           resizeMode="contain"
+          accessibilityLabel="PSPACE Toolbox"
         />
       </Animated.View>
     </View>
@@ -54,12 +48,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  logoContainer: {
-    alignItems: 'center',
-  },
-  logo: {
-    width: 350,
-    height: 350,
   },
 });

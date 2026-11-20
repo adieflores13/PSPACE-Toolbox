@@ -3,6 +3,7 @@
     "name": "PSPACE Toolbox",
     "slug": "pspace-toolbox",
     "icon": "./assets/logo.png",
+    "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/logo.png",
       "resizeMode": "contain",
